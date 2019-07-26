@@ -1,6 +1,6 @@
 # Sonar Teams Notifier
 
-[![GitHub](https://img.shields.io/github/license/aensley/sonar-teams-notifier)](blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/aensley/sonar-teams-notifier)](LICENSE)
 [![Build Status](https://travis-ci.com/aensley/sonar-teams-notifier.svg?branch=master)](https://travis-ci.com/aensley/sonar-teams-notifier)
 [![GitHub issues](https://img.shields.io/github/issues/aensley/sonar-teams-notifier)](issues)
 [![GitHub All Releases](https://img.shields.io/github/downloads/aensley/sonar-teams-notifier/total)](releases)
