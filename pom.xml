@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.andrewensley.sonarteamsnotifier</groupId>
+  <artifactId>sonar-teams-notifier</artifactId>
+  <version>1.0</version>
+
+  <packaging>sonar-plugin</packaging>
+
+  <name>Sonar Teams Notifier</name>
+  <description>Sends notifications to WebEx Teams</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <sonar.pluginName>Sonar Teams Notifier</sonar.pluginName>
+    <project.targetJdk>11</project.targetJdk>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+
+    <!-- JaCoCo support -->
+    <argLine />
+    <sonar.version>7.9.1</sonar.version>
+  </properties>
+
+  <scm>
+    <connection>scm:git:git@github.com:aensley/sonar-teams-notifier.git</connection>
+    <url>scm:git:git@github.com:aensley/sonar-teams-notifier.git</url>
+    <developerConnection>scm:git:git@github.com:aensley/sonar-teams-notifier.git</developerConnection>
+    <tag>teams-1.0</tag>
+  </scm>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonarsource.sonarqube</groupId>
+      <artifactId>sonar-plugin-api</artifactId>
+      <!-- minimal version of SonarQube to support. -->
+      <version>7.9.1</version>
+      <!-- mandatory scope -->
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.5</version>
+    </dependency>
+
+    <!-- Testing dependencies -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.5.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.12.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>2.0.2-beta</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M2</version>
+        <executions>
+          <execution>
+            <id>enforce-versions</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[3.1,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[${project.targetJdk},)</version>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M3</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.1.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.0.0-M1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>3.0.0-M1</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.4</version>
+      </plugin>
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>3.1.1</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
+        <artifactId>sonar-packaging-maven-plugin</artifactId>
+        <version>1.18.0.372</version>
+        <extensions>true</extensions>
+        <configuration>
+          <!-- the entry-point class that extends org.sonar.api.SonarPlugin -->
+          <pluginClass>com.andrewensley.sonarteamsnotifier.TeamsNotifierPlugin</pluginClass>
+
+          <!-- advanced properties can be set here. See paragraph "Advanced Build Properties". -->
+          <jarName>sonar-teams-notifier-${project.version}</jarName>
+          <pluginKey>sonar-teams-notifier</pluginKey>
+          <pluginName>Sonar Teams Notifier</pluginName>
+          <pluginDescription>Sends notifications to WebEx Teams</pluginDescription>
+          <sonarQubeMinVersion>6.7</sonarQubeMinVersion>
+          <pluginUrl>https://github.com/aensley/sonar-teams-notifier</pluginUrl>
+          <pluginIssueTrackerUrl>https://github.com/aensley/sonar-teams-notifier/issues</pluginIssueTrackerUrl>
+          <pluginSourcesUrl>https://github.com/aensley/sonar-teams-notifier</pluginSourcesUrl>
+          <pluginOrganizationName>Andrew Ensley</pluginOrganizationName>
+          <pluginOrganizationUrl>https://github.com/aensley</pluginOrganizationUrl>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

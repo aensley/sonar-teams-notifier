@@ -1,0 +1,14 @@
+**/.DS_Store
+**/target/
+**/.sonar/
+
+# Eclipse configuration files
+**/.classpath
+**/.settings/
+**/.project
+**/.springBeans
+
+# IntelliJ configuration files
+**/.idea/
+**/*.iml
+sonar-project.properties
