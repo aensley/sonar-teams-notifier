@@ -1,5 +1,7 @@
 # Sonar Teams Notifier
 
+[![Build Status](https://travis-ci.com/aensley/sonar-teams-notifier.svg?branch=master)](https://travis-ci.com/aensley/sonar-teams-notifier)
+
 This SonarQube plugin notifies WebEx Teams of Scan Results.
 
 
