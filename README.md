@@ -1,10 +1,8 @@
 # Sonar Teams Notifier
 
-[![Build Status](https://travis-ci.com/aensley/sonar-teams-notifier.svg?branch=master)](https://travis-ci.com/aensley/sonar-teams-notifier)
-[![Issues](https://img.shields.io/github/issues/aensley/sonar-teams-notifier)](https://github.com/aensley/sonar-teams-notifier/issues)
-![Commits since latest release](https://img.shields.io/github/commits-since/aensley/sonar-teams-notifier/latest)
-[![Downloads](https://img.shields.io/github/downloads/aensley/sonar-teams-notifier/total)](https://github.com/aensley/sonar-teams-notifier/releases)
 [![License](https://img.shields.io/github/license/aensley/sonar-teams-notifier)](LICENSE)
+[![Build Status](https://travis-ci.com/aensley/sonar-teams-notifier.svg?branch=master)](https://travis-ci.com/aensley/sonar-teams-notifier)
+[![Downloads](https://img.shields.io/github/downloads/aensley/sonar-teams-notifier/total)](https://github.com/aensley/sonar-teams-notifier/releases)
 
 This SonarQube plugin notifies WebEx Teams of Scan Results.
 
