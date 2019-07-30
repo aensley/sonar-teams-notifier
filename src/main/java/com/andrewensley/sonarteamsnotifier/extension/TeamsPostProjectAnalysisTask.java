@@ -1,21 +1,27 @@
 package com.andrewensley.sonarteamsnotifier.extension;
 
 import com.andrewensley.sonarteamsnotifier.domain.Constants;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.QualityGate;
 import org.sonar.api.ce.posttask.ScannerContext;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.*;
 import java.util.Map;
 import java.util.Optional;
-import static java.net.http.HttpRequest.BodyPublishers.ofString;
 
 /**
  * Post Project Analysis Task that sends the WebEx Teams notification message.
@@ -75,53 +81,112 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
                 .build();
 
             try {
-                HttpClient client = getHttpClient();
-                HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(hook))
-                    .header("Content-Type", "application/json")
-                    .POST(ofString(payload))
-                    .build();
-                client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(HttpResponse::body)
-                    .thenAccept(LOG::info)
-                    .join();
+               postJson(hook, payload);
             } catch (Exception e) {
                 LOG.error("Failed to send teams message", e);
             }
         }
     }
 
-    /**
-     * Builds the HTTP Client for web requests.
-     *
-     * @return The HTTP Client for the request.
-     */
-    private HttpClient getHttpClient() {
+    private void postJson (String uri, String payload) throws MalformedURLException {
         Optional<String> proxyIp = settings.get(Constants.PROXY_IP);
         Optional<Integer> proxyPort = settings.getInt(Constants.PROXY_PORT);
         Optional<String> proxyUser = settings.get(Constants.PROXY_USER);
         Optional<String> proxyPass = settings.get(Constants.PROXY_PASS);
-        if (proxyIp.isPresent() && proxyPort.isPresent()) {
-            if (proxyUser.isPresent() && proxyPass.isPresent()) {
-                // TODO: Add proxy authentication.
-                return HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .followRedirects(HttpClient.Redirect.ALWAYS)
-                    .proxy(ProxySelector.of(new InetSocketAddress(proxyIp.get(), proxyPort.get())))
-                    .build();
-            } else {
-                return HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_2)
-                    .followRedirects(HttpClient.Redirect.ALWAYS)
-                    .proxy(ProxySelector.of(new InetSocketAddress(proxyIp.get(), proxyPort.get())))
-                    .build();
+        URL hook = new URL(uri);
+        int port = getPort(hook);
+        String path = getPath(hook);
+        boolean proxyEnabled = (proxyIp.isPresent() && proxyPort.isPresent());
+        CloseableHttpClient httpClient = getHttpClient(proxyEnabled, proxyIp, proxyPort, proxyUser, proxyPass, hook, port);
+        try {
+            HttpHost target = new HttpHost(hook.getHost(), port);
+            HttpPost httpPost = getHttpPost(payload, path, proxyEnabled, proxyIp, proxyPort);
+            CloseableHttpResponse response = httpClient.execute(target, httpPost);
+            int responseCode = response.getStatusLine().getStatusCode();
+            if (responseCode != 200) {
+                throw new Exception("Invalid HTTP Response Code: " + responseCode);
             }
-        } else {
-            return HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
-                .followRedirects(HttpClient.Redirect.ALWAYS)
-                .build();
+
+            LOG.info("HTTP Response: " + response.getStatusLine().getStatusCode());
+        } catch (Exception e) {
+            LOG.error("Failed to send teams message", e);
+        } finally {
+            try {
+                httpClient.close();
+            } catch (Exception e) {
+            }
         }
+    }
+
+    private HttpPost getHttpPost(
+        String payload,
+        String path,
+        boolean proxyEnabled,
+        Optional<String> proxyIp,
+        Optional<Integer> proxyPort
+    ) throws UnsupportedEncodingException {
+        HttpPost httpPost = new HttpPost(path);
+        httpPost.setEntity(new StringEntity(payload));
+        httpPost.setHeader("Accept", "application/json");
+        httpPost.setHeader("Content-type", "application/json");
+
+        if (proxyEnabled) {
+            HttpHost proxy = new HttpHost(proxyIp.get(), proxyPort.get());
+            RequestConfig config = RequestConfig.custom()
+                .setProxy(proxy)
+                .build();
+            httpPost.setConfig(config);
+        }
+
+        return httpPost;
+    }
+
+    private CloseableHttpClient getHttpClient(
+        boolean proxyEnabled,
+        Optional<String> proxyIp,
+        Optional<Integer> proxyPort,
+        Optional<String> proxyUser,
+        Optional<String> proxyPass,
+        URL hook,
+        int port
+    ) {
+        CloseableHttpClient httpClient;
+        if (proxyEnabled && proxyUser.isPresent() && proxyPass.isPresent()) {
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(
+                new AuthScope(proxyIp.get(), proxyPort.get()),
+                new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+            credsProvider.setCredentials(
+                new AuthScope(hook.getHost(), port),
+                new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+            httpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+        } else {
+            httpClient = HttpClients.createDefault();
+        }
+
+        return httpClient;
+    }
+
+    private int getPort(URL url) {
+        int port = url.getPort();
+        if (port == -1) {
+            port = (url.getProtocol().equals("https") ? 443 : 80);
+        }
+
+        return port;
+    }
+
+    private String getPath(URL url) {
+        String path = url.getPath();
+        if (!url.getQuery().isEmpty()) {
+            path += "?" + url.getQuery();
+        }
+
+        if (!url.getRef().isEmpty()) {
+            path += "#" + url.getRef();
+        }
+
+        return path;
     }
 
     /**
@@ -151,7 +216,7 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
      */
     private String getSonarServerUrl() {
         Optional<String> urlOptional = settings.get("sonar.core.serverBaseURL");
-        if (urlOptional.isEmpty()) {
+        if (!urlOptional.isPresent()) {
             return "http://pleaseDefineSonarQubeUrl/";
         }
 

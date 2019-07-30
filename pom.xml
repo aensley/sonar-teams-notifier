@@ -6,7 +6,7 @@
 
   <groupId>com.andrewensley.sonarteamsnotifier</groupId>
   <artifactId>sonar-teams-notifier</artifactId>
-  <version>1.0</version>
+  <version>1.1</version>
 
   <packaging>sonar-plugin</packaging>
 
@@ -17,9 +17,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <sonar.pluginName>Sonar Teams Notifier</sonar.pluginName>
-    <project.targetJdk>11</project.targetJdk>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <project.targetJdk>1.8</project.targetJdk>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- JaCoCo support -->
     <argLine />
@@ -48,6 +48,19 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.8.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- Testing dependencies -->
@@ -163,7 +176,7 @@
           <pluginKey>sonar-teams-notifier</pluginKey>
           <pluginName>Sonar Teams Notifier</pluginName>
           <pluginDescription>Sends notifications to WebEx Teams</pluginDescription>
-          <sonarQubeMinVersion>6.7</sonarQubeMinVersion>
+          <sonarQubeMinVersion>7.9.1</sonarQubeMinVersion>
           <pluginUrl>https://github.com/aensley/sonar-teams-notifier</pluginUrl>
           <pluginIssueTrackerUrl>https://github.com/aensley/sonar-teams-notifier/issues</pluginIssueTrackerUrl>
           <pluginSourcesUrl>https://github.com/aensley/sonar-teams-notifier</pluginSourcesUrl>
