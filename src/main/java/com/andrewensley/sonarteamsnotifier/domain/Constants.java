@@ -54,4 +54,7 @@ public class Constants {
    * The name of the Proxy Password property.
    */
   public static final String PROXY_PASS = "sonar.teams.proxy_pass";
+
+  private Constants() {
+  }
 }

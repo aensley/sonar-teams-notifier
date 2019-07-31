@@ -28,6 +28,8 @@ class TeamsHttpClient {
    */
   private static final Logger LOG = Loggers.get(TeamsHttpClient.class);
 
+  private static final String NOT_SET = "NOT_SET";
+
   /**
    * The URL for the webhook.
    */
@@ -159,10 +161,10 @@ class TeamsHttpClient {
         + " | Path: " + path
         + " | ProxyEnabled: " + proxyEnabled()
         + " | ProxyAuthEnabled: " + proxyAuthEnabled()
-        + " | Proxy IP: " + (proxyIp.orElse("NOT_SET"))
-        + " | Proxy Port: " + (proxyPort.isPresent() ? proxyPort.get() : "NOT_SET")
-        + " | Proxy User: " + (proxyUser.orElse("NOT_SET"))
-        + " | Proxy Pass: " + (proxyPass.orElse("NOT_SET"))
+        + " | Proxy IP: " + (proxyIp.orElse(NOT_SET))
+        + " | Proxy Port: " + (proxyPort.isPresent() ? proxyPort.get() : NOT_SET)
+        + " | Proxy User: " + (proxyUser.orElse(NOT_SET))
+        + " | Proxy Pass: " + (proxyPass.orElse(NOT_SET))
     );
 
     return this;
@@ -206,20 +208,20 @@ class TeamsHttpClient {
    */
   private HttpPost getHttpPost() throws UnsupportedEncodingException {
     Gson gson = new Gson();
-    HttpPost httpPost = new HttpPost(path);
-    httpPost.setEntity(new StringEntity(gson.toJson(payload)));
-    httpPost.setHeader("Accept", "application/json");
-    httpPost.setHeader("Content-type", "application/json");
+    HttpPost tempHttpPost = new HttpPost(path);
+    tempHttpPost.setEntity(new StringEntity(gson.toJson(payload)));
+    tempHttpPost.setHeader("Accept", "application/json");
+    tempHttpPost.setHeader("Content-type", "application/json");
 
     if (proxyEnabled()) {
       HttpHost proxy = new HttpHost(proxyIp.get(), proxyPort.get());
       RequestConfig config = RequestConfig.custom()
           .setProxy(proxy)
           .build();
-      httpPost.setConfig(config);
+      tempHttpPost.setConfig(config);
     }
 
-    return httpPost;
+    return tempHttpPost;
   }
 
   /**
@@ -246,7 +248,7 @@ class TeamsHttpClient {
    * @return The HTTP Client.
    */
   private CloseableHttpClient getHttpClient() {
-    CloseableHttpClient httpClient;
+    CloseableHttpClient tempHttpClient;
     if (proxyAuthEnabled()) {
       CredentialsProvider credsProvider = new BasicCredentialsProvider();
       credsProvider.setCredentials(
@@ -255,12 +257,12 @@ class TeamsHttpClient {
       credsProvider.setCredentials(
           new AuthScope(hook.getHost(), port),
           new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
-      httpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+      tempHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
     } else {
-      httpClient = HttpClients.createDefault();
+      tempHttpClient = HttpClients.createDefault();
     }
 
-    return httpClient;
+    return tempHttpClient;
   }
 
   /**
@@ -269,12 +271,12 @@ class TeamsHttpClient {
    * @return The port of the webhook URL.
    */
   private int getPort() {
-    int port = hook.getPort();
-    if (port == -1) {
-      port = (hook.getProtocol().equals("https") ? 443 : 80);
+    int tempPort = hook.getPort();
+    if (tempPort == -1) {
+      tempPort = (hook.getProtocol().equals("https") ? 443 : 80);
     }
 
-    return port;
+    return tempPort;
   }
 
   /**
@@ -283,16 +285,16 @@ class TeamsHttpClient {
    * @return The full path of the webhook URL.
    */
   private String getPath() {
-    String path = hook.getPath();
+    String tempPath = hook.getPath();
     if (!hook.getQuery().isEmpty()) {
-      path += "?" + hook.getQuery();
+      tempPath += "?" + hook.getQuery();
     }
 
     if (!hook.getRef().isEmpty()) {
-      path += "#" + hook.getRef();
+      tempPath += "#" + hook.getRef();
     }
 
-    return path;
+    return tempPath;
   }
 
 }

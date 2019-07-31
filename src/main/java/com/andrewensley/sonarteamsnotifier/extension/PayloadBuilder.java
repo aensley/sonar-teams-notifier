@@ -104,6 +104,19 @@ class PayloadBuilder {
     assertNotNull(failOnly, "failOnly");
     assertNotNull(analysis, "analysis");
 
+    Payload payload = new Payload();
+    payload.markdown = getMessage();
+    LOG.info("WebEx Teams message: " + payload.markdown);
+
+    return payload;
+  }
+
+  /**
+   * Returns the message to send.
+   *
+   * @return The message.
+   */
+  private String getMessage() {
     QualityGate qualityGate = analysis.getQualityGate();
     StringBuilder message = new StringBuilder();
     message.append(
@@ -126,17 +139,11 @@ class PayloadBuilder {
     Date date = analysis.getDate();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     message.append(format("* **Date**: %s  \n", simpleDateFormat.format(date)));
-
     message.append(getConditionsAppended(qualityGate, failOnly));
-
     message.append(format("\n\nSee %s", projectUrl));
-
-    Payload payload = new Payload();
-    payload.markdown = message.toString();
-    LOG.info("WebEx Teams message: " + payload.markdown);
-
-    return payload;
+    return message.toString();
   }
+
 
   /**
    * Appends Condition statuses to the message.
@@ -225,8 +232,8 @@ class PayloadBuilder {
     } else {
       if (conditionValueIsPercentage(condition)) {
         try {
-          Double d = Double.parseDouble(value);
-          sb.append(percentageFormat.format(d));
+          Double percent = Double.parseDouble(value);
+          sb.append(percentageFormat.format(percent));
           sb.append("%");
         } catch (NumberFormatException e) {
           LOG.error("Failed to parse [{}] into a Double due to [{}]", value, e.getMessage());
