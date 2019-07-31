@@ -6,12 +6,13 @@
 
   <groupId>com.andrewensley.sonarteamsnotifier</groupId>
   <artifactId>sonar-teams-notifier</artifactId>
-  <version>1.1</version>
+  <version>1.1.1</version>
 
   <packaging>sonar-plugin</packaging>
 
   <name>Sonar Teams Notifier</name>
   <description>Sends notifications to WebEx Teams</description>
+  <url>https://github.com/aensley/sonar-teams-notifier</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,11 +27,34 @@
     <sonar.version>7.9.1</sonar.version>
   </properties>
 
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>aensley</id>
+      <name>Andrew Ensley</name>
+      <url>https://github.com/aensley</url>
+      <organization>Andrew Ensley</organization>
+      <organizationUrl>https://andrewensley.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <organization>
+    <name>Andrew Ensley</name>
+    <url>https://andrewensley.com</url>
+  </organization>
+
   <scm>
     <connection>scm:git:git@github.com:aensley/sonar-teams-notifier.git</connection>
     <url>scm:git:git@github.com:aensley/sonar-teams-notifier.git</url>
     <developerConnection>scm:git:git@github.com:aensley/sonar-teams-notifier.git</developerConnection>
-    <tag>teams-1.0</tag>
+    <tag>v${project.version}</tag>
   </scm>
 
   <dependencies>
@@ -43,7 +67,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
@@ -86,7 +109,6 @@
 
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -152,6 +174,35 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.1.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>8.23</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+          <encoding>UTF-8</encoding>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <violationSeverity>warning</violationSeverity>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.4</version>
@@ -168,10 +219,7 @@
         <version>1.18.0.372</version>
         <extensions>true</extensions>
         <configuration>
-          <!-- the entry-point class that extends org.sonar.api.SonarPlugin -->
           <pluginClass>com.andrewensley.sonarteamsnotifier.TeamsNotifierPlugin</pluginClass>
-
-          <!-- advanced properties can be set here. See paragraph "Advanced Build Properties". -->
           <jarName>sonar-teams-notifier-${project.version}</jarName>
           <pluginKey>sonar-teams-notifier</pluginKey>
           <pluginName>Sonar Teams Notifier</pluginName>
@@ -186,4 +234,20 @@
       </plugin>
     </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.1.0</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
 </project>
