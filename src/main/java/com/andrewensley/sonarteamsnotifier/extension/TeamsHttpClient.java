@@ -287,12 +287,14 @@ class TeamsHttpClient {
    */
   private String getPath() {
     String tempPath = hook.getPath();
-    if (!hook.getQuery().isEmpty()) {
-      tempPath += "?" + hook.getQuery();
+    String query = hook.getQuery();
+    if (query != null && !query.isEmpty()) {
+      tempPath += "?" + query;
     }
 
-    if (!hook.getRef().isEmpty()) {
-      tempPath += "#" + hook.getRef();
+    String ref = hook.getRef();
+    if (ref != null && !ref.isEmpty()) {
+      tempPath += "#" + ref;
     }
 
     return tempPath;
