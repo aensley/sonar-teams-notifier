@@ -1,3 +1,22 @@
 language: java
 jdk:
   - oraclejdk11
+addons:
+  code_climate:
+    repo_token:
+      secure: "XMMSsyMTjw+b2tnC0m4zIe5EWczN6bGeTlauZtCnqNChUbXUlgz8yM/Ei40yiO4b7B4PsM/ikiLij35zybRzyW2QnT0G2f7/FfBraOdRtOdovtGH5f/0sVY2wxK/+4wp2OYWtK2YwiQEQmpPqyG1/ZEItOq6rPadho96yDU6eibFfUD+BFAFbrNKiXICKW7qpSGtzTWzbqhHcYhPfX02R9x3JeACj9lKj2b8QSF+kf7G0kp6nOjZX35x+UK8cuXvip6DL8n6d4dzQ//Z+iXOcqtypTgYvjEO5EX6gQVTnI4AHA+MddpRE0hgigfNPIAX5WfiJRNT0TYNTc81BxY2XOwUBb4Myc5yY3y7ru7YDJaWrLuj8B7BYewGUNRlO4JHdyjhrZwRBEeuTHGov0P2wsakyFQmv8goTgqMxqT597jcX8HmiNpW4ePytb2TSs77WqhnPlwquR8Y2f83DzBhijBo4ZYctWjA4mm6hybBF4WilAyUi2TtYUlQIw5sQ3Qg+e/+DdynIoWyN4zvW/Lb5QYTjRSnWhXt6pjHT4RCzkryhpy6CwIBnMKWDMt5H4lhdxIa65RfZIFWUL0K/lgmnX2BtvScb/SAcH3BRRQp+jokLb4UYapcnAKCkch62rlOdqxC6vcm8uENPMwDCJ6VueViUmy+ILItnHLouFATlkw="
+  sonarcloud:
+    organization: "aensley"
+    token:
+      secure: "U5H9N3rUVl6fWYOX0z/hbKPeaJs+XWJDGHXiSGEGGZcMdA5BYRG206QR0PlP+n4/D07Chpj8y+NXv7Ig8YoqqibJrjohwAriqW+aI1AXQqedWdZpTAsQz35sduJnr2iDtty3ee8Tc+5kMyJzdVDunLW1FQ2DkqTGYLdxZr3vV2XuVSMLlXIGLIyzaVyn8BD/sJ34LjTU5hyyYwcZiwqiaR2jHv7SUqStK9Ay+RcjK30wA0C/MBM+VW/I30Bq1Wp0Wm7cYIOs0GM/dTyDaco7aZ5C1uBqe7tLkiKsbO8OfwspkBqsAo9+j6GiqIvEZ0VNF2ehsWmxYXMVlgXEefX/RG4V6L+IfMY5ButEBzYH4XlPXmOThf2VjhAy9fRd6VMRQecm1TYUElDcK2f3EWjgV0xm/GcU36y+PvR7wCcFi0t8DA7XrFvdtnadvawpYNMZmmlSVrJQ9sFjnh60DlSpHesEKhlXCLWfs5f01RW5+u88Bbdx4q2JPQURJKqu5XhGmk9RCP4E38CLKCkvkaOnPhEnU0YChKK2e4v1mAjOUNKVafuJYTiUkyCJG9djZCiRrqBo7/2EDlCUX4NQM9t3a+8b4ALaFmUt1rFw/A2bcPEBrTls21v2f6gIsrZRPm69MnLnm5OVGqzZjGLxDikNxnZ2SxwnWkhteI9iGrMcbn4="
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+script:
+  - mvn test
+  # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=aensley_sonar-teams-notifier
+after_script:
+  - ./cc-test-reporter format-coverage -d -t jacoco ./target/jacoco-ut/jacoco.xml
+  - ./cc-test-reporter upload-coverage -d
