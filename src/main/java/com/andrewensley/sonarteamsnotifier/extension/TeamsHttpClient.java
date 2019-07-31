@@ -1,5 +1,6 @@
 package com.andrewensley.sonarteamsnotifier.extension;
 
+import com.andrewensley.sonarteamsnotifier.domain.InvalidHttpResponseException;
 import com.google.gson.Gson;
 
 import java.io.UnsupportedEncodingException;
@@ -181,7 +182,7 @@ class TeamsHttpClient {
       CloseableHttpResponse response = httpClient.execute(target, httpPost);
       int responseCode = response.getStatusLine().getStatusCode();
       if (responseCode != 200) {
-        throw new Exception("Invalid HTTP Response Code: " + responseCode);
+        throw new InvalidHttpResponseException("Invalid HTTP Response Code: " + responseCode);
       }
 
       LOG.info("POST Successful!");
