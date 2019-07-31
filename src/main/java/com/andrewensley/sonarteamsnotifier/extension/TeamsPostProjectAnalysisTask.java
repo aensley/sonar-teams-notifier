@@ -67,7 +67,7 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
         return;
       }
 
-      LOG.info("Teams notification URLL " + hook);
+      LOG.info("Teams notification URL: " + hook);
       LOG.info("Teams notification message: " + analysis.toString());
 
       Payload payload = PayloadBuilder.of(analysis)
