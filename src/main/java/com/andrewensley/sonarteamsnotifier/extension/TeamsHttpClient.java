@@ -26,7 +26,7 @@ class TeamsHttpClient {
   /**
    * Logger.
    */
-  private static final Logger LOG = Loggers.get(PayloadBuilder.class);
+  private static final Logger LOG = Loggers.get(TeamsHttpClient.class);
 
   /**
    * The URL for the webhook.
@@ -152,6 +152,19 @@ class TeamsHttpClient {
     target = new HttpHost(hook.getHost(), port);
     httpPost = getHttpPost();
 
+    LOG.debug(
+        "TeamsHttpClient BUILT"
+        + " | Host: " + hook.getHost()
+        + " | Port: " + port
+        + " | Path: " + path
+        + " | ProxyEnabled: " + proxyEnabled()
+        + " | ProxyAuthEnabled: " + proxyAuthEnabled()
+        + " | Proxy IP: " + (proxyIp.orElse("NOT_SET"))
+        + " | Proxy Port: " + (proxyPort.isPresent() ? proxyPort.get() : "NOT_SET")
+        + " | Proxy User: " + (proxyUser.orElse("NOT_SET"))
+        + " | Proxy Pass: " + (proxyPass.orElse("NOT_SET"))
+    );
+
     return this;
   }
 
@@ -169,6 +182,7 @@ class TeamsHttpClient {
         throw new Exception("Invalid HTTP Response Code: " + responseCode);
       }
 
+      LOG.info("POST Successful!");
       success = true;
     } catch (Exception e) {
       LOG.error("Failed to send teams message", e);

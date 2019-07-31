@@ -51,8 +51,7 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
         return;
       }
 
-      LOG.info("Analysis ScannerContext: [{}]", properties);
-      String projectKey = analysis.getProject().getKey();
+      LOG.debug("Analysis ScannerContext: [{}]", properties);
       String hook = properties.getOrDefault(Constants.HOOK, "").trim();
       boolean failOnly = !properties.getOrDefault(Constants.FAIL_ONLY, "").trim().isEmpty();
 
@@ -68,11 +67,12 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
         return;
       }
 
-      LOG.info("Teams notification will be sent: " + analysis.toString());
+      LOG.info("Teams notification URLL " + hook);
+      LOG.info("Teams notification message: " + analysis.toString());
 
       Payload payload = PayloadBuilder.of(analysis)
           .failOnly(failOnly)
-          .projectUrl(projectUrl(projectKey))
+          .projectUrl(projectUrl(analysis.getProject().getKey()))
           .build();
 
       Optional<String> proxyIp = settings.get(Constants.PROXY_IP);
