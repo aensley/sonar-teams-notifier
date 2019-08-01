@@ -6,6 +6,9 @@ import com.google.gson.Gson;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import org.apache.http.HttpHost;
@@ -15,10 +18,14 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -58,6 +65,11 @@ class TeamsHttpClient {
    * Internal Apache HTTP Client.
    */
   private CloseableHttpClient httpClient;
+
+  /**
+   * Whether or not to bypass HTTPS validation.
+   */
+  private boolean bypassHttpsValidation = false;
 
   /**
    * The target host of the webhook.
@@ -117,6 +129,18 @@ class TeamsHttpClient {
   }
 
   /**
+   * Sets the bypass HTTPS validation state to enabled or disabled.
+   *
+   * @param bypass Set to true to enable the bypass. False to disable.
+   *
+   * @return The TeamsHttpClient
+   */
+  TeamsHttpClient bypassHttpsValidation(boolean bypass) {
+    this.bypassHttpsValidation = bypass;
+    return this;
+  }
+
+  /**
    * Sets proxy settings on the TeamsHttpClient.
    *
    * @param ip   The proxy host name or IP.
@@ -155,7 +179,7 @@ class TeamsHttpClient {
     port = getPort();
     path = getPath();
     httpClient = getHttpClient();
-    target = new HttpHost(hook.getHost(), port);
+    target = new HttpHost(hook.getHost(), port, hook.getProtocol());
     httpPost = getHttpPost();
 
     LOG.debug(
@@ -163,6 +187,7 @@ class TeamsHttpClient {
         + " | Host: " + hook.getHost()
         + " | Port: " + port
         + " | Path: " + path
+        + " | Bypass HTTPS Validation: " + bypassHttpsValidation
         + " | ProxyEnabled: " + proxyEnabled()
         + " | ProxyAuthEnabled: " + proxyAuthEnabled()
         + " | Proxy IP: " + proxyIp.orElse(NOT_SET)
@@ -218,6 +243,7 @@ class TeamsHttpClient {
     tempHttpPost.setHeader("Content-type", "application/json");
 
     if (proxyEnabled()) {
+      //noinspection OptionalGetWithoutIsPresent
       HttpHost proxy = new HttpHost(proxyIp.get(), proxyPort.get());
       RequestConfig config = RequestConfig.custom()
           .setProxy(proxy)
@@ -252,21 +278,64 @@ class TeamsHttpClient {
    * @return The HTTP Client.
    */
   private CloseableHttpClient getHttpClient() {
-    CloseableHttpClient tempHttpClient;
-    if (proxyAuthEnabled()) {
-      CredentialsProvider credsProvider = new BasicCredentialsProvider();
-      credsProvider.setCredentials(
-          new AuthScope(proxyIp.get(), proxyPort.get()),
-          new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
-      credsProvider.setCredentials(
-          new AuthScope(hook.getHost(), port),
-          new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
-      tempHttpClient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-    } else {
-      tempHttpClient = HttpClients.createDefault();
+    CloseableHttpClient tempHttpClient = HttpClients.createDefault();
+    if (proxyAuthEnabled() || bypassHttpsValidation) {
+      tempHttpClient = getCustomHttpClient();
     }
 
     return tempHttpClient;
+  }
+
+  /**
+   * Gets a custom HTTP client for proxy auth and/or HTTPS validation bypass.
+   *
+   * @return The custom HTTP client.
+   */
+  private CloseableHttpClient getCustomHttpClient() {
+    HttpClientBuilder httpClientBuilder = HttpClients.custom();
+    if (bypassHttpsValidation) {
+      httpClientBypassHttpsValidation(httpClientBuilder);
+    }
+
+    if (proxyAuthEnabled()) {
+      httpClientProxyAuth(httpClientBuilder);
+    }
+
+    return httpClientBuilder.build();
+  }
+
+  /**
+   * Sets necessary properties on the HTTP Client to bypass HTTPS validation.
+   *
+   * @param builder The HttpClientBuilder being used to build the client.
+   */
+  private void httpClientBypassHttpsValidation(HttpClientBuilder builder) {
+    try {
+      builder
+        .setSSLContext(
+            new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build()
+        )
+        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+      LOG.error("Error bypassing HTTPS Validation", e);
+    }
+  }
+
+  /**
+   * Sets necessary properties on the HTTP Client to add proxy authentication.
+   *
+   * @param builder The HttpClientBuilder being used to build the client.
+   */
+  private void httpClientProxyAuth(HttpClientBuilder builder) {
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    //noinspection OptionalGetWithoutIsPresent
+    credentialsProvider.setCredentials(
+        new AuthScope(proxyIp.get(), proxyPort.get()),
+        new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+    credentialsProvider.setCredentials(
+        new AuthScope(hook.getHost(), port),
+        new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+    builder.setDefaultCredentialsProvider(credentialsProvider);
   }
 
   /**

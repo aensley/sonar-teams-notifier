@@ -43,57 +43,70 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
    */
   @Override
   public void finished(final ProjectAnalysis analysis) {
-    ScannerContext scannerContext = analysis.getScannerContext();
-    Map<String, String> properties = scannerContext.getProperties();
-    if (properties.containsKey(Constants.HOOK)) {
-      if (!isPluginEnabled()) {
-        LOG.info("Teams Notifier Plugin disabled.");
-        return;
-      }
+    if (!isPluginEnabled()) {
+      LOG.info("Teams Notifier Plugin disabled.");
+      return;
+    }
 
-      LOG.debug("Analysis ScannerContext: [{}]", properties);
-      String hook = properties.getOrDefault(Constants.HOOK, "").trim();
-      boolean failOnly = !properties.getOrDefault(Constants.FAIL_ONLY, "").trim().isEmpty();
+    Map<String, String> properties = analysis.getScannerContext().getProperties();
+    if (!properties.containsKey(Constants.HOOK)) {
+      LOG.info("No hook URL found for Teams Notifier Plugin.");
+      return;
+    }
 
-      QualityGate qualityGate = analysis.getQualityGate();
-      if (
-          failOnly
-          && qualityGate != null && QualityGate.Status.OK.equals(qualityGate.getStatus())
-      ) {
-        LOG.info(
-            "Skipping notification because "
-            + "scan passed quality gate settings and fail_only is enabled."
-        );
-        return;
-      }
+    LOG.debug("Analysis ScannerContext: [{}]", properties);
+    String hook = properties.getOrDefault(Constants.HOOK, "").trim();
+    boolean failOnly = !properties.getOrDefault(Constants.FAIL_ONLY, "").trim().isEmpty();
+    if (failOnly && qualityGateOk(analysis)) {
+      LOG.info("QualityGate passed and fail_only is enabled. Skipping notification.");
+      return;
+    }
 
-      LOG.info("Teams notification URL: " + hook);
-      LOG.info("Teams notification message: " + analysis.toString());
+    LOG.debug("Teams notification URL: " + hook);
+    LOG.debug("Teams notification message: " + analysis.toString());
+    sendNotification(hook, failOnly, analysis);
+  }
 
-      Payload payload = PayloadBuilder.of(analysis)
-          .failOnly(failOnly)
-          .projectUrl(projectUrl(analysis.getProject().getKey()))
+  /**
+   * Checks if the quality gate status is set and is OK.
+   *
+   * @param analysis Project Analysis object.
+   *
+   * @return True if quality gate is set and is OK. False if not.
+   */
+  private boolean qualityGateOk(ProjectAnalysis analysis) {
+    QualityGate qualityGate = analysis.getQualityGate();
+    return (qualityGate != null && QualityGate.Status.OK.equals(qualityGate.getStatus()));
+  }
+
+  /**
+   * Sends the WebEx teams notification.
+   *
+   * @param hook     The hook URL.
+   * @param failOnly The setting of the fail_only flag.
+   * @param analysis The Project Analysis.
+   */
+  private void sendNotification(String hook, boolean failOnly, ProjectAnalysis analysis) {
+    try {
+      TeamsHttpClient httpClient = TeamsHttpClient
+          .of(hook, PayloadBuilder.of(analysis)
+              .failOnly(failOnly)
+              .projectUrl(projectUrl(analysis.getProject().getKey()))
+              .build())
+          .bypassHttpsValidation(isBypassEnabled())
+          .proxy(settings.get(Constants.PROXY_IP), settings.getInt(Constants.PROXY_PORT))
+          .proxyAuth(settings.get(Constants.PROXY_USER), settings.get(Constants.PROXY_PASS))
           .build();
-
-      Optional<String> proxyIp = settings.get(Constants.PROXY_IP);
-      Optional<Integer> proxyPort = settings.getInt(Constants.PROXY_PORT);
-      Optional<String> proxyUser = settings.get(Constants.PROXY_USER);
-      Optional<String> proxyPass = settings.get(Constants.PROXY_PASS);
-      try {
-        TeamsHttpClient httpClient = TeamsHttpClient.of(hook, payload)
-            .proxy(proxyIp, proxyPort)
-            .proxyAuth(proxyUser, proxyPass)
-            .build();
-        if (httpClient.post()) {
-          LOG.info("Teams message posted");
-        } else {
-          LOG.error("Teams message failed");
-        }
-      } catch (Exception e) {
-        LOG.error("Failed to send teams message", e);
+      if (httpClient.post()) {
+        LOG.info("Teams message posted");
+      } else {
+        LOG.error("Teams message failed");
       }
+    } catch (Exception e) {
+      LOG.error("Failed to send teams message", e);
     }
   }
+
 
   /**
    * Checks if the plugin is enabled globally.
@@ -102,6 +115,15 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
    */
   private boolean isPluginEnabled() {
     return settings.getBoolean(Constants.ENABLED).orElse(false);
+  }
+
+  /**
+   * Checks if the HTTPS Validation Bypass is enabled.
+   *
+   * @return True if enabled. False if not.
+   */
+  private boolean isBypassEnabled() {
+    return settings.getBoolean(Constants.BYPASS_HTTPS_VALIDATION).orElse(false);
   }
 
   /**
