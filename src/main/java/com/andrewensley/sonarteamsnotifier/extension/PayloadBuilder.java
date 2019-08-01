@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.sonar.api.ce.posttask.Branch;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.QualityGate;
+import org.sonar.api.ce.posttask.QualityGate.Condition;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -116,26 +117,29 @@ class PayloadBuilder {
    *
    * @return The message.
    */
+  @SuppressWarnings("deprecation")
   private String getMessage() {
     QualityGate qualityGate = analysis.getQualityGate();
+    if (qualityGate == null) {
+      return "";
+    }
+
     StringBuilder message = new StringBuilder();
-    message.append(
-        format(
-            "# %s %S - [%s]\n\n",
-            qualityGate.getName(),
-            qualityGate.getStatus(),
-            analysis.getProject().getName()
-        )
-    );
+    message.append(format(
+        "# %s %S - [%s]\n\n",
+        qualityGate.getName(),
+        qualityGate.getStatus(),
+        analysis.getProject().getName()
+    ));
 
     Optional<Branch> branch = analysis.getBranch();
-    if (branch.isPresent()/* && !branch.get().isMain()*/) {
-      message.append(format("* **Branch**: %s  \n", branch.get().getName().orElse("")));
-    }
+    /* && !branch.get().isMain()*/
+    branch.ifPresent(
+        value -> message.append(format("* **Branch**: %s  \n", value.getName().orElse("")))
+    );
 
     String commit = analysis.getScmRevisionId();
     message.append(format("* **Commit**: %s  \n", commit));
-
     Date date = analysis.getDate();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     message.append(format("* **Date**: %s  \n", simpleDateFormat.format(date)));
@@ -177,7 +181,7 @@ class PayloadBuilder {
    *
    * @return True if the condition is not OK or NO_VALUE. False if it is.
    */
-  private boolean notOkOrNoValueCondition(QualityGate.Condition condition) {
+  private boolean notOkOrNoValueCondition(Condition condition) {
     return !(QualityGate.EvaluationStatus.OK.equals(condition.getStatus())
       || QualityGate.EvaluationStatus.NO_VALUE.equals(condition.getStatus()));
   }
@@ -189,34 +193,45 @@ class PayloadBuilder {
    *
    * @return The translated condition.
    */
-  private String translateCondition(QualityGate.Condition condition) {
-    String conditionName = condition.getMetricKey();
-
+  private String translateCondition(Condition condition) {
     if (QualityGate.EvaluationStatus.NO_VALUE.equals(condition.getStatus())) {
       // No value for given metric
-      return format("* **%s**: %s\n", conditionName, condition.getStatus().name());
+      return format("* **%s**: %s\n", condition.getMetricKey(), condition.getStatus().name());
     } else {
-      StringBuilder sb = new StringBuilder();
-      appendConditionValue(condition, sb);
-      if (condition.getWarningThreshold() != null) {
-        sb.append(", warning if ");
-        appendConditionComparisonOperator(condition, sb);
-        sb.append(condition.getWarningThreshold());
-      }
-
-      if (condition.getErrorThreshold() != null) {
-        sb.append(", error if ");
-        appendConditionComparisonOperator(condition, sb);
-        sb.append(condition.getErrorThreshold());
-      }
-
       return format(
           "* **%s**: %s\n  * %s\n",
-          conditionName,
+          condition.getMetricKey(),
           condition.getStatus().name(),
-          sb.toString()
+          getConditionString(condition)
       );
     }
+  }
+
+  /**
+   * Gets the condition string when there's more detailed information
+   * about the quality gate condition.
+   *
+   * @param condition The Quality Gate Condition.
+   *
+   * @return The condition string.
+   */
+  @SuppressWarnings("deprecation")
+  private String getConditionString(Condition condition) {
+    StringBuilder sb = new StringBuilder();
+    appendConditionValue(condition, sb);
+    if (condition.getWarningThreshold() != null) {
+      sb.append(", warning if ");
+      appendConditionComparisonOperator(condition, sb);
+      sb.append(condition.getWarningThreshold());
+    }
+
+    if (condition.getErrorThreshold() != null) {
+      sb.append(", error if ");
+      appendConditionComparisonOperator(condition, sb);
+      sb.append(condition.getErrorThreshold());
+    }
+
+    return sb.toString();
   }
 
   /**
@@ -225,23 +240,44 @@ class PayloadBuilder {
    * @param condition The condition.
    * @param sb        The StringBuilder.
    */
-  private void appendConditionValue(QualityGate.Condition condition, StringBuilder sb) {
+  private void appendConditionValue(Condition condition, StringBuilder sb) {
     String value = condition.getValue();
     if (value.equals("")) {
       sb.append("-");
     } else {
-      if (conditionValueIsPercentage(condition)) {
-        try {
-          Double percent = Double.parseDouble(value);
-          sb.append(percentageFormat.format(percent));
-          sb.append("%");
-        } catch (NumberFormatException e) {
-          LOG.error("Failed to parse [{}] into a Double due to [{}]", value, e.getMessage());
-          sb.append(value);
-        }
-      } else {
-        sb.append(value);
-      }
+      appendNonEmptyValue(condition, sb, value);
+    }
+  }
+
+  /**
+   * Appends a non-empty value to the condition string.
+   *
+   * @param condition The condition.
+   * @param sb        The StringBuilder.
+   * @param value     The value.
+   */
+  private void appendNonEmptyValue(Condition condition, StringBuilder sb, String value) {
+    if (conditionValueIsPercentage(condition)) {
+      appendPercentageValue(sb, value);
+    } else {
+      sb.append(value);
+    }
+  }
+
+  /**
+   * Appends a percentage value to the condition string.
+   *
+   * @param sb    The StringBuilder.
+   * @param value The percentage value.
+   */
+  private void appendPercentageValue(StringBuilder sb, String value) {
+    try {
+      Double percent = Double.parseDouble(value);
+      sb.append(percentageFormat.format(percent));
+      sb.append("%");
+    } catch (NumberFormatException e) {
+      LOG.error("Failed to parse [{}] into a Double due to [{}]", value, e.getMessage());
+      sb.append(value);
     }
   }
 
@@ -251,10 +287,8 @@ class PayloadBuilder {
    * @param condition The condition.
    * @param sb        The StringBuilder.
    */
-  private void appendConditionComparisonOperator(
-      QualityGate.Condition condition,
-      StringBuilder sb
-  ) {
+  @SuppressWarnings("deprecation")
+  private void appendConditionComparisonOperator(Condition condition, StringBuilder sb) {
     switch (condition.getOperator()) {
       case EQUALS:
         sb.append("==");
@@ -280,7 +314,7 @@ class PayloadBuilder {
    *
    * @return True if the condition's value is a percentage. False if not.
    */
-  private boolean conditionValueIsPercentage(QualityGate.Condition condition) {
+  private boolean conditionValueIsPercentage(Condition condition) {
     switch (condition.getMetricKey()) {
       case CoreMetrics.NEW_COVERAGE_KEY:
       case CoreMetrics.NEW_SQALE_DEBT_RATIO_KEY:

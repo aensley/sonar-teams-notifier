@@ -280,18 +280,28 @@ class TeamsHttpClient {
   private CloseableHttpClient getHttpClient() {
     CloseableHttpClient tempHttpClient = HttpClients.createDefault();
     if (proxyAuthEnabled() || bypassHttpsValidation) {
-      HttpClientBuilder httpClientBuilder = HttpClients.custom();
-      if (bypassHttpsValidation) {
-        httpClientBypassHttpsValidation(httpClientBuilder);
-      }
-      if (proxyAuthEnabled()) {
-        httpClientProxyAuth(httpClientBuilder);
-      }
-
-      tempHttpClient = httpClientBuilder.build();
+      tempHttpClient = getCustomHttpClient();
     }
 
     return tempHttpClient;
+  }
+
+  /**
+   * Gets a custom HTTP client for proxy auth and/or HTTPS validation bypass.
+   *
+   * @return The custom HTTP client.
+   */
+  private CloseableHttpClient getCustomHttpClient() {
+    HttpClientBuilder httpClientBuilder = HttpClients.custom();
+    if (bypassHttpsValidation) {
+      httpClientBypassHttpsValidation(httpClientBuilder);
+    }
+
+    if (proxyAuthEnabled()) {
+      httpClientProxyAuth(httpClientBuilder);
+    }
+
+    return httpClientBuilder.build();
   }
 
   /**
