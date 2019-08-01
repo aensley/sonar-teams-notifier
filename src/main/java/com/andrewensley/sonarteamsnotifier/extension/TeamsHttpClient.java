@@ -29,6 +29,9 @@ class TeamsHttpClient {
    */
   private static final Logger LOG = Loggers.get(TeamsHttpClient.class);
 
+  /**
+   * String value indicating a setting is not set.
+   */
   private static final String NOT_SET = "NOT_SET";
 
   /**
@@ -162,10 +165,10 @@ class TeamsHttpClient {
         + " | Path: " + path
         + " | ProxyEnabled: " + proxyEnabled()
         + " | ProxyAuthEnabled: " + proxyAuthEnabled()
-        + " | Proxy IP: " + (proxyIp.orElse(NOT_SET))
+        + " | Proxy IP: " + proxyIp.orElse(NOT_SET)
         + " | Proxy Port: " + (proxyPort.isPresent() ? proxyPort.get() : NOT_SET)
-        + " | Proxy User: " + (proxyUser.orElse(NOT_SET))
-        + " | Proxy Pass: " + (proxyPass.orElse(NOT_SET))
+        + " | Proxy User: " + proxyUser.orElse(NOT_SET)
+        + " | Proxy Pass (length): " + proxyPass.orElse("").length()
     );
 
     return this;
