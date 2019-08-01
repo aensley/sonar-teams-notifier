@@ -168,7 +168,7 @@ class TeamsHttpClient {
         + " | Proxy IP: " + proxyIp.orElse(NOT_SET)
         + " | Proxy Port: " + (proxyPort.isPresent() ? proxyPort.get() : NOT_SET)
         + " | Proxy User: " + proxyUser.orElse(NOT_SET)
-        + " | Proxy Pass (length): " + proxyPass.orElse("").length
+        + " | Proxy Pass (length): " + proxyPass.orElse("").length()
     );
 
     return this;
