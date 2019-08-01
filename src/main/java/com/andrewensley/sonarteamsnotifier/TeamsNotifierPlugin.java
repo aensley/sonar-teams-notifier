@@ -44,80 +44,53 @@ public class TeamsNotifierPlugin implements Plugin {
    */
   private List<Object> pluginPropertyDefinitions() {
     List<Object> extensions = new ArrayList<>();
-    extensions.add(getBooleanProperty(Constants.ENABLED, "Plugin enabled",
-        "Are Teams notifications enabled in general?"));
-    extensions.add(getBooleanProperty(Constants.BYPASS_HTTPS_VALIDATION, "Bypass HTTPS Validation",
-        "Bypass SSL/TLS certificate validation on HTTPS requests (useful for proxies)"));
-    extensions.add(getStringProperty(Constants.PROXY_IP, "Proxy Server",
-        "Domain or IP address of proxy server to use"));
-    extensions.add(getProxyPortProperty());
-    extensions.add(getStringProperty(Constants.PROXY_USER, "Proxy User",
-        "User name for proxy authentication"));
-    extensions.add(getStringProperty(Constants.PROXY_PASS, "Proxy Password",
-        "Password for proxy authentication"));
+    extensions.add(getProperty(Constants.ENABLED, "Plugin enabled",
+        "Are Teams notifications enabled in general?",
+        "false", PropertyType.BOOLEAN));
+    extensions.add(getProperty(Constants.BYPASS_HTTPS_VALIDATION, "Bypass HTTPS Validation",
+        "Bypass SSL/TLS certificate validation on HTTPS requests (useful for proxies)",
+        "false", PropertyType.BOOLEAN));
+    extensions.add(getProperty(Constants.PROXY_IP, "Proxy Server",
+        "Domain or IP address of proxy server to use",
+        "", PropertyType.STRING));
+    extensions.add(getProperty(Constants.PROXY_PORT, "Proxy Port",
+        "Port for the proxy server",
+        "8080", PropertyType.INTEGER));
+    extensions.add(getProperty(Constants.PROXY_USER, "Proxy User",
+        "User name for proxy authentication",
+        "", PropertyType.STRING));
+    extensions.add(getProperty(Constants.PROXY_PASS, "Proxy Password",
+        "Password for proxy authentication",
+        "", PropertyType.STRING));
     return extensions;
   }
 
   /**
-   * Gets a single string property to add to Sonar plugins.
+   * Gets a single property to add to Sonar plugins.
    *
    * @param property     Property ID.
    * @param name         Property name.
    * @param description  Property description.
+   * @param defaultValue Default value of the property.
+   * @param type         Property type.
    *
    * @return The property to add.
    */
-  private PropertyDefinition getStringProperty(String property, String name, String description) {
-    return PropertyDefinition.builder(property)
-        .name(name)
-        .description(description)
-        .defaultValue("")
-        .type(PropertyType.STRING)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(propertyIndex++)
-        .build();
-  }
-
-  /**
-   * Gets a single boolean property to add to Sonar plugins.
-   *
-   * @param property     Property ID.
-   * @param name         Property name.
-   * @param description  Property description.
-   *
-   * @return The property to add.
-   */
-  private PropertyDefinition getBooleanProperty(
+  private PropertyDefinition getProperty(
       String property,
       String name,
-      String description
+      String description,
+      String defaultValue,
+      PropertyType type
   ) {
     return PropertyDefinition.builder(property)
-        .name(name)
-        .description(description)
-        .defaultValue("false")
-        .type(PropertyType.BOOLEAN)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(propertyIndex++)
-        .build();
-  }
-
-  /**
-   * Gets a single boolean property to add to Sonar plugins.
-   *
-   * @return The property to add.
-   */
-  private PropertyDefinition getProxyPortProperty() {
-    return PropertyDefinition.builder(Constants.PROXY_PORT)
-        .name("Proxy Port")
-        .description("Port for the proxy server")
-        .defaultValue("8080")
-        .type(PropertyType.INTEGER)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(propertyIndex++)
-        .build();
+      .name(name)
+      .description(description)
+      .defaultValue(defaultValue)
+      .type(type)
+      .category(Constants.CATEGORY)
+      .subCategory(Constants.SUBCATEGORY)
+      .index(propertyIndex++)
+      .build();
   }
 }
