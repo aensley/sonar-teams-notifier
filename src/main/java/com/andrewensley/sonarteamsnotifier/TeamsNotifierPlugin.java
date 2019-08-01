@@ -18,6 +18,11 @@ import org.sonar.api.config.PropertyDefinition;
 public class TeamsNotifierPlugin implements Plugin {
 
   /**
+   * Index of properties added in the extension list.
+   */
+  private int propertyIndex = 0;
+
+  /**
    * Defines this plugin's hooks.
    *
    * @param context The SonarQube context.
@@ -39,70 +44,53 @@ public class TeamsNotifierPlugin implements Plugin {
    */
   private List<Object> pluginPropertyDefinitions() {
     List<Object> extensions = new ArrayList<>();
-    extensions.add(PropertyDefinition.builder(Constants.ENABLED)
-        .name("Plugin enabled")
-        .description("Are Teams notifications enabled in general?")
-        .defaultValue("false")
-        .type(PropertyType.BOOLEAN)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(0)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.BYPASS_HTTPS_VALIDATION)
-        .name("Bypass HTTPS Validation")
-        .description("Bypass SSL/TLS certificate validation on HTTPS requests (useful for proxies)")
-        .defaultValue("false")
-        .type(PropertyType.BOOLEAN)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(1)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.PROXY_IP)
-        .name("Proxy Server")
-        .description("Domain or IP address of proxy server to use")
-        .defaultValue("")
-        .type(PropertyType.STRING)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(2)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.PROXY_PORT)
-        .name("Proxy port")
-        .description("Port for proxy server")
-        .defaultValue("8080")
-        .type(PropertyType.INTEGER)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(3)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.PROXY_PROTOCOL)
-        .name("Proxy protocol")
-        .description("Protocol to use to connect to proxy server")
-        .defaultValue("HTTP")
-        .type(PropertyType.SINGLE_SELECT_LIST)
-        .options("DIRECT", "HTTP", "SOCKS")
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(4)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.PROXY_USER)
-        .name("Proxy User")
-        .description("User name for proxy authentication")
-        .defaultValue("")
-        .type(PropertyType.STRING)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(5)
-        .build());
-    extensions.add(PropertyDefinition.builder(Constants.PROXY_PASS)
-        .name("Proxy Password")
-        .description("Password for proxy authentication")
-        .defaultValue("")
-        .type(PropertyType.STRING)
-        .category(Constants.CATEGORY)
-        .subCategory(Constants.SUBCATEGORY)
-        .index(6)
-        .build());
+    extensions.add(getProperty(Constants.ENABLED, "Plugin enabled",
+        "Are Teams notifications enabled in general?",
+        "false", PropertyType.BOOLEAN));
+    extensions.add(getProperty(Constants.BYPASS_HTTPS_VALIDATION, "Bypass HTTPS Validation",
+        "Bypass SSL/TLS certificate validation on HTTPS requests (useful for proxies)",
+        "false", PropertyType.BOOLEAN));
+    extensions.add(getProperty(Constants.PROXY_IP, "Proxy Server",
+        "Domain or IP address of proxy server to use",
+        "", PropertyType.STRING));
+    extensions.add(getProperty(Constants.PROXY_PORT, "Proxy Port",
+        "Port for the proxy server",
+        "8080", PropertyType.INTEGER));
+    extensions.add(getProperty(Constants.PROXY_USER, "Proxy User",
+        "User name for proxy authentication",
+        "", PropertyType.STRING));
+    extensions.add(getProperty(Constants.PROXY_PASS, "Proxy Password",
+        "Password for proxy authentication",
+        "", PropertyType.STRING));
     return extensions;
+  }
+
+  /**
+   * Gets a single property to add to Sonar plugins.
+   *
+   * @param property     Property ID.
+   * @param name         Property name.
+   * @param description  Property description.
+   * @param defaultValue Default value of the property.
+   * @param type         Property type.
+   *
+   * @return The property to add.
+   */
+  private PropertyDefinition getProperty(
+      String property,
+      String name,
+      String description,
+      String defaultValue,
+      PropertyType type
+  ) {
+    return PropertyDefinition.builder(property)
+      .name(name)
+      .description(description)
+      .defaultValue(defaultValue)
+      .type(type)
+      .category(Constants.CATEGORY)
+      .subCategory(Constants.SUBCATEGORY)
+      .index(propertyIndex++)
+      .build();
   }
 }

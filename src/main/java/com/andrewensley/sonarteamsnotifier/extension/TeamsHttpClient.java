@@ -282,33 +282,50 @@ class TeamsHttpClient {
     if (proxyAuthEnabled() || bypassHttpsValidation) {
       HttpClientBuilder httpClientBuilder = HttpClients.custom();
       if (bypassHttpsValidation) {
-        try {
-          httpClientBuilder
-            .setSSLContext(
-                new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build()
-            )
-            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-          LOG.error("Error bypassing HTTPS Validation", e);
-        }
+        httpClientBypassHttpsValidation(httpClientBuilder);
       }
       if (proxyAuthEnabled()) {
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        //noinspection OptionalGetWithoutIsPresent
-        credsProvider.setCredentials(
-            new AuthScope(proxyIp.get(), proxyPort.get()),
-            new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
-        credsProvider.setCredentials(
-            new AuthScope(hook.getHost(), port),
-            new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
-        httpClientBuilder
-            .setDefaultCredentialsProvider(credsProvider);
+        httpClientProxyAuth(httpClientBuilder);
       }
 
       tempHttpClient = httpClientBuilder.build();
     }
 
     return tempHttpClient;
+  }
+
+  /**
+   * Sets necessary properties on the HTTP Client to bypass HTTPS validation.
+   *
+   * @param builder The HttpClientBuilder being used to build the client.
+   */
+  private void httpClientBypassHttpsValidation(HttpClientBuilder builder) {
+    try {
+      builder
+        .setSSLContext(
+            new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build()
+        )
+        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+      LOG.error("Error bypassing HTTPS Validation", e);
+    }
+  }
+
+  /**
+   * Sets necessary properties on the HTTP Client to add proxy authentication.
+   *
+   * @param builder The HttpClientBuilder being used to build the client.
+   */
+  private void httpClientProxyAuth(HttpClientBuilder builder) {
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    //noinspection OptionalGetWithoutIsPresent
+    credentialsProvider.setCredentials(
+        new AuthScope(proxyIp.get(), proxyPort.get()),
+        new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+    credentialsProvider.setCredentials(
+        new AuthScope(hook.getHost(), port),
+        new UsernamePasswordCredentials(proxyUser.get(), proxyPass.get()));
+    builder.setDefaultCredentialsProvider(credentialsProvider);
   }
 
   /**
