@@ -81,6 +81,7 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
       Optional<String> proxyPass = settings.get(Constants.PROXY_PASS);
       try {
         TeamsHttpClient httpClient = TeamsHttpClient.of(hook, payload)
+            .bypassHttpsValidation(isBypassEnabled())
             .proxy(proxyIp, proxyPort)
             .proxyAuth(proxyUser, proxyPass)
             .build();
@@ -102,6 +103,15 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
    */
   private boolean isPluginEnabled() {
     return settings.getBoolean(Constants.ENABLED).orElse(false);
+  }
+
+  /**
+   * Checks if the HTTPS Validation Bypass is enabled.
+   *
+   * @return True if enabled. False if not.
+   */
+  private boolean isBypassEnabled() {
+    return settings.getBoolean(Constants.BYPASS_HTTPS_VALIDATION).orElse(false);
   }
 
   /**

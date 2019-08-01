@@ -31,6 +31,11 @@ public class Constants {
   public static final String FAIL_ONLY = "sonar.teams.fail_only";
 
   /**
+   * The name of the bypass HTTPS validation property.
+   */
+  public static final String BYPASS_HTTPS_VALIDATION = "sonar.teams.bypass_https_validation";
+
+  /**
    * The name of the Proxy IP property.
    */
   public static final String PROXY_IP = "sonar.teams.proxy_ip";

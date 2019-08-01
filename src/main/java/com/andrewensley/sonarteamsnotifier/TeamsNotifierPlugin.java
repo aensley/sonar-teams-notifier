@@ -48,6 +48,15 @@ public class TeamsNotifierPlugin implements Plugin {
         .subCategory(Constants.SUBCATEGORY)
         .index(0)
         .build());
+    extensions.add(PropertyDefinition.builder(Constants.BYPASS_HTTPS_VALIDATION)
+        .name("Bypass HTTPS Validation")
+        .description("Bypass SSL/TLS certificate validation on HTTPS requests (useful for proxies)")
+        .defaultValue("false")
+        .type(PropertyType.BOOLEAN)
+        .category(Constants.CATEGORY)
+        .subCategory(Constants.SUBCATEGORY)
+        .index(1)
+        .build());
     extensions.add(PropertyDefinition.builder(Constants.PROXY_IP)
         .name("Proxy Server")
         .description("Domain or IP address of proxy server to use")
@@ -55,7 +64,7 @@ public class TeamsNotifierPlugin implements Plugin {
         .type(PropertyType.STRING)
         .category(Constants.CATEGORY)
         .subCategory(Constants.SUBCATEGORY)
-        .index(1)
+        .index(2)
         .build());
     extensions.add(PropertyDefinition.builder(Constants.PROXY_PORT)
         .name("Proxy port")
@@ -64,7 +73,7 @@ public class TeamsNotifierPlugin implements Plugin {
         .type(PropertyType.INTEGER)
         .category(Constants.CATEGORY)
         .subCategory(Constants.SUBCATEGORY)
-        .index(2)
+        .index(3)
         .build());
     extensions.add(PropertyDefinition.builder(Constants.PROXY_PROTOCOL)
         .name("Proxy protocol")
@@ -74,7 +83,7 @@ public class TeamsNotifierPlugin implements Plugin {
         .options("DIRECT", "HTTP", "SOCKS")
         .category(Constants.CATEGORY)
         .subCategory(Constants.SUBCATEGORY)
-        .index(3)
+        .index(4)
         .build());
     extensions.add(PropertyDefinition.builder(Constants.PROXY_USER)
         .name("Proxy User")
@@ -83,7 +92,7 @@ public class TeamsNotifierPlugin implements Plugin {
         .type(PropertyType.STRING)
         .category(Constants.CATEGORY)
         .subCategory(Constants.SUBCATEGORY)
-        .index(4)
+        .index(5)
         .build());
     extensions.add(PropertyDefinition.builder(Constants.PROXY_PASS)
         .name("Proxy Password")
@@ -92,7 +101,7 @@ public class TeamsNotifierPlugin implements Plugin {
         .type(PropertyType.STRING)
         .category(Constants.CATEGORY)
         .subCategory(Constants.SUBCATEGORY)
-        .index(5)
+        .index(6)
         .build());
     return extensions;
   }
