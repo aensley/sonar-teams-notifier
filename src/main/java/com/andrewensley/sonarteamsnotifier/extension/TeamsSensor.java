@@ -15,11 +15,15 @@ import org.sonar.api.utils.log.Loggers;
  */
 public class TeamsSensor implements Sensor {
 
-
   /**
    * Logger.
    */
   private static final Logger LOG = Loggers.get(TeamsSensor.class);
+
+  /**
+   * The Sensor Context.
+   */
+  private SensorContext sensorContext;
 
   /**
    * Describes this sensor.
@@ -38,16 +42,27 @@ public class TeamsSensor implements Sensor {
    */
   @Override
   public void execute(SensorContext context) {
-    Optional<String> hook = context.config().get(Constants.HOOK);
-    if (hook.isPresent()) {
-      LOG.info("Sonar Teams Notifier Hook URL found.");
-      context.addContextProperty(Constants.HOOK, hook.get());
-    }
+    this.sensorContext = context;
+    checkAndAddParam(Constants.HOOK);
+    checkAndAddParam(Constants.FAIL_ONLY);
+    checkAndAddParam(Constants.COMMIT_URL);
+    checkAndAddParam(Constants.CHANGE_AUTHOR_EMAIL);
+    checkAndAddParam(Constants.CHANGE_AUTHOR_NAME);
+  }
 
-    Optional<String> failOnly = context.config().get(Constants.FAIL_ONLY);
-    if (failOnly.isPresent()) {
-      LOG.info("Sonar Teams Notifier fail_only found.");
-      context.addContextProperty(Constants.FAIL_ONLY, failOnly.get());
+  /**
+   * Checks if a scanner parameter is set and adds it to the context if so.
+   *
+   * @param paramName The name of the parameter to check.
+   */
+  private void checkAndAddParam(String paramName) {
+    Optional<String> param = sensorContext.config().get(paramName);
+    if (param.isPresent()) {
+      LOG.info(String.format(
+          "Sonar Teams Notifier %s found.",
+          paramName.substring(paramName.lastIndexOf(".") + 1)
+      ));
+      sensorContext.addContextProperty(paramName, param.get());
     }
   }
 }
