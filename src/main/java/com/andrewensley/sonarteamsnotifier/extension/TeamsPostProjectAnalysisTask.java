@@ -88,10 +88,12 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
   private void sendNotification(String hook, boolean failOnly, ProjectAnalysis analysis) {
     try {
       TeamsHttpClient httpClient = TeamsHttpClient
-          .of(hook, PayloadBuilder.of(analysis)
-              .failOnly(failOnly)
-              .qualityGateOk(qualityGateOk(analysis))
-              .projectUrl(projectUrl(analysis.getProject().getKey()))
+          .of(hook, PayloadBuilder.of(
+                  analysis,
+                  projectUrl(analysis.getProject().getKey()),
+                  failOnly,
+                  qualityGateOk(analysis)
+              )
               .commitUrl(settings.get(Constants.COMMIT_URL).orElse(""))
               .changeAuthor(
                   settings.get(Constants.CHANGE_AUTHOR_EMAIL).orElse(""),

@@ -65,10 +65,21 @@ class PayloadBuilder {
   /**
    * Constructor.
    *
-   * @param analysis The Project's analysis.
+   * @param analysis      The Project's analysis.
+   * @param projectUrl    The URL for the project.
+   * @param failOnly      Whether to alert only on failures or not.
+   * @param qualityGateOk Whether the overall quality gate status is OK or not.
    */
-  private PayloadBuilder(PostProjectAnalysisTask.ProjectAnalysis analysis) {
+  private PayloadBuilder(
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
+  ) {
     this.analysis = analysis;
+    this.projectUrl = projectUrl;
+    this.failOnly = failOnly;
+    this.qualityGateOk = qualityGateOk;
     // Round percentages to 2 decimal points.
     this.percentageFormat = new DecimalFormat();
     this.percentageFormat.setMaximumFractionDigits(2);
@@ -77,48 +88,20 @@ class PayloadBuilder {
   /**
    * Static pattern PayloadBuilder constructor.
    *
-   * @param analysis The Project's analysis.
-   *
-   * @return The PayloadBuilder
-   */
-  static PayloadBuilder of(PostProjectAnalysisTask.ProjectAnalysis analysis) {
-    return new PayloadBuilder(analysis);
-  }
-
-  /**
-   * Set failOnly in chained static builder.
-   *
-   * @param failOnly Whether to alert only on failures or not.
-   *
-   * @return The PayloadBuilder
-   */
-  PayloadBuilder failOnly(boolean failOnly) {
-    this.failOnly = failOnly;
-    return this;
-  }
-
-  /**
-   * Set qualityGateOk in chained static builder.
-   *
+   * @param analysis      The Project's analysis.
+   * @param projectUrl    The URL for the project.
+   * @param failOnly      Whether to alert only on failures or not.
    * @param qualityGateOk Whether the overall quality gate status is OK or not.
    *
    * @return The PayloadBuilder
    */
-  PayloadBuilder qualityGateOk(boolean qualityGateOk) {
-    this.qualityGateOk = qualityGateOk;
-    return this;
-  }
-
-  /**
-   * Set projectUrl in chained static builder.
-   *
-   * @param projectUrl The URL for the project.
-   *
-   * @return The PayloadBuilder
-   */
-  PayloadBuilder projectUrl(String projectUrl) {
-    this.projectUrl = projectUrl;
-    return this;
+  static PayloadBuilder of(
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
+  ) {
+    return new PayloadBuilder(analysis, projectUrl, failOnly, qualityGateOk);
   }
 
   /**
@@ -168,32 +151,20 @@ class PayloadBuilder {
     assertNotNull(qualityGateOk, "qualityGateOk");
     assertNotNull(analysis, "analysis");
 
-    Payload payload = new Payload();
-    payload.markdown = getMessage();
-    LOG.info("WebEx Teams message: " + payload.markdown);
-
-    return payload;
-  }
-
-  /**
-   * Returns the message to send.
-   *
-   * @return The message.
-   */
-  private String getMessage() {
     QualityGate qualityGate = analysis.getQualityGate();
-    if (qualityGate == null) {
-      return "";
+    StringBuilder message = new StringBuilder();
+    if (qualityGate != null) {
+      Optional<Branch> branch = analysis.getBranch();
+      appendHeader(message, qualityGate, branch);
+      appendCommit(message);
+      appendBranch(message, branch);
+      appendDate(message);
+      appendConditions(message, qualityGate);
     }
 
-    Optional<Branch> branch = analysis.getBranch();
-    StringBuilder message = new StringBuilder();
-    appendHeader(message, qualityGate, branch);
-    appendCommit(message);
-    appendBranch(message, branch);
-    appendDate(message);
-    appendConditions(message, qualityGate);
-    return message.toString();
+    Payload payload = new Payload(message.toString());
+    LOG.info("WebEx Teams message: " + payload.markdown);
+    return payload;
   }
 
   /**
