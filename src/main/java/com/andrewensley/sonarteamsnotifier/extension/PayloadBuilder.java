@@ -113,9 +113,12 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   PayloadBuilder changeAuthor(String email, String name) {
+    LOG.debug("changeAuthor() email: " + email + " | name " + name);
     if (email != null && !email.isEmpty()) {
+      LOG.debug("changeAuthor() email not empty");
       this.changeAuthor = "<@personEmail:" + email;
       if (name != null && !name.isEmpty()) {
+        LOG.debug("changeAuthor() name not empty");
         this.changeAuthor += "|" + name;
       }
 
@@ -133,7 +136,9 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   PayloadBuilder commitUrl(String commitUrl) {
+    LOG.debug("commitURl() COMMIT_URL: " + commitUrl);
     if (commitUrl != null && !commitUrl.isEmpty()) {
+      LOG.debug("commitURl() COMMIT_URL not null or empty");
       this.commitUrl = commitUrl;
     }
 
@@ -180,7 +185,7 @@ class PayloadBuilder {
       Optional<Branch> branch
   ) {
     message.append(format(
-        "## [%s **%S** [%s]](%s)\n\n",
+        "### %s **%S** [[%s](%s)]\n\n",
         qualityGate.getName(),
         qualityGate.getStatus(),
         analysis.getProject().getName(),
@@ -196,18 +201,22 @@ class PayloadBuilder {
   @SuppressWarnings("deprecation")
   private void appendCommit(StringBuilder message) {
     String commit = analysis.getScmRevisionId();
-    message.append("* **Commit**: ");
+    message.append("**Commit**: ");
+    LOG.debug("appendCommit() COMMIT_URL: " + commitUrl);
     if (commitUrl.isEmpty()) {
+      LOG.debug("appendCommit() COMMIT_URL empty");
       message.append(commit);
     } else {
+      LOG.debug("appendCommit() COMMIT_URL not empty");
       message.append(format("[%s](%s)", commit, commitUrl));
     }
 
     if (!changeAuthor.isEmpty() && !qualityGateOk) {
+      LOG.debug("appendCommit() Appending Change Author");
       message.append(format(" by %s", changeAuthor));
     }
 
-    message.append("\n");
+    message.append("  \n");
   }
 
   /**
@@ -219,7 +228,7 @@ class PayloadBuilder {
   private void appendDate(StringBuilder message) {
     Date date = analysis.getDate();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    message.append(format("* **Date**: %s\n", simpleDateFormat.format(date)));
+    message.append(format("**Date**: %s  \n", simpleDateFormat.format(date)));
   }
 
   /**
@@ -231,7 +240,7 @@ class PayloadBuilder {
   private void appendBranch(StringBuilder message, Optional<Branch> branch) {
     if (branchIsNonMain(branch)) {
       //noinspection OptionalGetWithoutIsPresent
-      message.append(format("* **Branch**: %s\n", branch.get().getName().orElse("default")));
+      message.append(format("**Branch**: %s  \n", branch.get().getName().orElse("default")));
     }
   }
 
