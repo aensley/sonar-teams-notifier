@@ -60,7 +60,7 @@ public class TeamsSensor implements Sensor {
     if (param.isPresent()) {
       LOG.info(String.format(
           "Sonar Teams Notifier %s found.",
-          paramName.substring(paramName.lastIndexOf(".") + 1)
+          paramName.substring(paramName.lastIndexOf('.') + 1)
       ));
       sensorContext.addContextProperty(paramName, param.get());
     }
