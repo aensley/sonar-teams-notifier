@@ -61,7 +61,7 @@ public class TeamsNotifierPlugin implements Plugin {
         "", PropertyType.STRING));
     extensions.add(getProperty(Constants.PROXY_PASS, "Proxy Password",
         "Password for proxy authentication",
-        "", PropertyType.STRING));
+        "", PropertyType.PASSWORD));
     return extensions;
   }
 

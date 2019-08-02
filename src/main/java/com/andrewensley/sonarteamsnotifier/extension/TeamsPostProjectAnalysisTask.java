@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.QualityGate;
-import org.sonar.api.ce.posttask.ScannerContext;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -91,7 +90,13 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
       TeamsHttpClient httpClient = TeamsHttpClient
           .of(hook, PayloadBuilder.of(analysis)
               .failOnly(failOnly)
+              .qualityGateOk(qualityGateOk(analysis))
               .projectUrl(projectUrl(analysis.getProject().getKey()))
+              .commitUrl(settings.get(Constants.COMMIT_URL).orElse(""))
+              .changeAuthor(
+                  settings.get(Constants.CHANGE_AUTHOR_EMAIL).orElse(""),
+                  settings.get(Constants.CHANGE_AUTHOR_NAME).orElse("")
+              )
               .build())
           .bypassHttpsValidation(isBypassEnabled())
           .proxy(settings.get(Constants.PROXY_IP), settings.getInt(Constants.PROXY_PORT))
