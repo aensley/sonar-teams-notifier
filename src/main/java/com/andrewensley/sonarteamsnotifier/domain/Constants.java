@@ -21,14 +21,29 @@ public class Constants {
   public static final String ENABLED = "sonar.teams.enabled";
 
   /**
-   * The name of the webhook property.
+   * The name of the webhook property, supplied to sonar-scanner.
    */
   public static final String HOOK = "sonar.teams.hook";
 
   /**
-   * The name of the fail-only property.
+   * The name of the fail-only property, supplied to sonar-scanner.
    */
   public static final String FAIL_ONLY = "sonar.teams.fail_only";
+
+  /**
+   * The name of the change author email property, supplied to sonar-scanner.
+   */
+  public static final String CHANGE_AUTHOR_EMAIL = "sonar.teams.change_author_email";
+
+  /**
+   * The name of the change author name property, supplied to sonar-scanner.
+   */
+  public static final String CHANGE_AUTHOR_NAME = "sonar.teams.change_author_name";
+
+  /**
+   * The name of the commit URL property, supplied to sonar-scanner.
+   */
+  public static final String COMMIT_URL = "sonar.teams.commit_url";
 
   /**
    * The name of the bypass HTTPS validation property.
@@ -44,11 +59,6 @@ public class Constants {
    * The name of the Proxy Port property.
    */
   public static final String PROXY_PORT = "sonar.teams.proxy_port";
-
-  /**
-   * The name of the Proxy Protocol property.
-   */
-  public static final String PROXY_PROTOCOL = "sonar.teams.proxy_protocol";
 
   /**
    * The name of the Proxy User property.

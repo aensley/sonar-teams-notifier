@@ -24,18 +24,40 @@ Only one setting is required once the plugin is installed, and that's to enable 
 
 ### Scanning
 
-To enable WebEx Teams notifications for scan results, supply the [**Incoming Webhook URL**](https://apphub.webex.com/integrations/incoming-webhooks-cisco-systems) to the sonar-scanner command using the custom `sonar.teams.hook` property.
 
+#### Basic Usage
+
+To enable WebEx Teams notifications for scan results, supply the [**Incoming Webhook URL**](https://apphub.webex.com/integrations/incoming-webhooks-cisco-systems) to the sonar-scanner command using the custom `sonar.teams.hook` property. _This is the only property required to enable notifications._
+
+
+##### Example
 
 ```ShellSession
 mvn sonar:sonar \
   -Dsonar.teams.hook=https://api.ciscospark.com/v1/webhooks/incoming/1234
 ```
 
-If you want notifications only of failures, specify any truthy value to the custom `sonar.teams.fail_only` property.
+
+#### Advanced Usage
+
+All custom properties pertaining to this plugin are specified under `sonar.teams`, e.g. `sonar.teams.hook`.
+
+| Property name | Required | Description |
+| ------------- | :------: | ----------- |
+| `hook` | **YES** | The WebEx Teams [Incoming Webhook URL](https://apphub.webex.com/integrations/incoming-webhooks-cisco-systems). |
+| `fail_only` | no | Specify any truthy value (e.g. `1` or `true`) to send notifications only when there is a failure. |
+| `commit_url` | no | When specified, the commit in the notification links to the commit that triggered the build/scan. |
+| `change_author_email` | no | When specified, the commit author is mentioned when there are any failures. |
+| `change_author_name` | no | Sets the commit author's display name when mentioned. |
+
+
+##### Example
 
 ```ShellSession
 mvn sonar:sonar \
   -Dsonar.teams.hook=https://api.ciscospark.com/v1/webhooks/incoming/1234 \
-  -Dsonar.teams.fail_only=1
+  -Dsonar.teams.fail_only=1 \
+  -Dsonar.teams.commit_url=https://github.com/owner/repo/commit/1234567 \
+  -Dsonar.teams.change_author_email=author@email.com \
+  -Dsonar.teams.change_author_name="Author Name"
 ```

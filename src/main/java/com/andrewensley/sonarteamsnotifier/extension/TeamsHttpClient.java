@@ -209,7 +209,7 @@ class TeamsHttpClient {
     try {
       CloseableHttpResponse response = httpClient.execute(target, httpPost);
       int responseCode = response.getStatusLine().getStatusCode();
-      if (responseCode != 200) {
+      if (responseCode < 200 || responseCode > 299) {
         throw new InvalidHttpResponseException("Invalid HTTP Response Code: " + responseCode);
       }
 

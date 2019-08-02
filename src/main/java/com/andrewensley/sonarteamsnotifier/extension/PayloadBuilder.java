@@ -17,7 +17,6 @@ import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
-
 /**
  * Builds a payload for a WebEx Teams message.
  */
@@ -44,6 +43,21 @@ class PayloadBuilder {
   private boolean failOnly;
 
   /**
+   * Whether the overall QualityGate status is OK or not.
+   */
+  private boolean qualityGateOk;
+
+  /**
+   * The change author to mention on failures.
+   */
+  private String changeAuthor = "";
+
+  /**
+   * The URL of the commit.
+   */
+  private String commitUrl = "";
+
+  /**
    * Decimal format for percentages.
    */
   private DecimalFormat percentageFormat;
@@ -51,10 +65,21 @@ class PayloadBuilder {
   /**
    * Constructor.
    *
-   * @param analysis The Project's analysis.
+   * @param analysis      The Project's analysis.
+   * @param projectUrl    The URL for the project.
+   * @param failOnly      Whether to alert only on failures or not.
+   * @param qualityGateOk Whether the overall quality gate status is OK or not.
    */
-  private PayloadBuilder(PostProjectAnalysisTask.ProjectAnalysis analysis) {
+  private PayloadBuilder(
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
+  ) {
     this.analysis = analysis;
+    this.projectUrl = projectUrl;
+    this.failOnly = failOnly;
+    this.qualityGateOk = qualityGateOk;
     // Round percentages to 2 decimal points.
     this.percentageFormat = new DecimalFormat();
     this.percentageFormat.setMaximumFractionDigits(2);
@@ -63,35 +88,55 @@ class PayloadBuilder {
   /**
    * Static pattern PayloadBuilder constructor.
    *
-   * @param analysis The Project's analysis.
+   * @param analysis      The Project's analysis.
+   * @param projectUrl    The URL for the project.
+   * @param failOnly      Whether to alert only on failures or not.
+   * @param qualityGateOk Whether the overall quality gate status is OK or not.
    *
    * @return The PayloadBuilder
    */
-  static PayloadBuilder of(PostProjectAnalysisTask.ProjectAnalysis analysis) {
-    return new PayloadBuilder(analysis);
+  static PayloadBuilder of(
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
+  ) {
+    return new PayloadBuilder(analysis, projectUrl, failOnly, qualityGateOk);
   }
 
   /**
-   * Set failOnly in chained static builder.
+   * Set changeAuthor in chained static builder.
    *
-   * @param failOnly Whether to alert only on failures or not.
+   * @param email The change author's email.
+   * @param name  The change author's name.
    *
    * @return The PayloadBuilder
    */
-  PayloadBuilder failOnly(boolean failOnly) {
-    this.failOnly = failOnly;
+  PayloadBuilder changeAuthor(String email, String name) {
+    if (email != null && !email.isEmpty()) {
+      this.changeAuthor = "<@personEmail:" + email;
+      if (name != null && !name.isEmpty()) {
+        this.changeAuthor += "|" + name;
+      }
+
+      this.changeAuthor += ">";
+    }
+
     return this;
   }
 
   /**
-   * Set projectUrl in chained static builder.
+   * Set commitUrl in chained static builder.
    *
-   * @param projectUrl The URL for the project.
+   * @param commitUrl The URL for the commit.
    *
    * @return The PayloadBuilder
    */
-  PayloadBuilder projectUrl(String projectUrl) {
-    this.projectUrl = projectUrl;
+  PayloadBuilder commitUrl(String commitUrl) {
+    if (commitUrl != null && !commitUrl.isEmpty()) {
+      this.commitUrl = commitUrl;
+    }
+
     return this;
   }
 
@@ -103,64 +148,128 @@ class PayloadBuilder {
   Payload build() {
     assertNotNull(projectUrl, "projectUrl");
     assertNotNull(failOnly, "failOnly");
+    assertNotNull(qualityGateOk, "qualityGateOk");
     assertNotNull(analysis, "analysis");
 
-    Payload payload = new Payload();
-    payload.markdown = getMessage();
-    LOG.info("WebEx Teams message: " + payload.markdown);
+    QualityGate qualityGate = analysis.getQualityGate();
+    StringBuilder message = new StringBuilder();
+    if (qualityGate != null) {
+      Optional<Branch> branch = analysis.getBranch();
+      appendHeader(message, qualityGate, branch);
+      appendCommit(message);
+      appendBranch(message, branch);
+      appendDate(message);
+      appendConditions(message, qualityGate);
+    }
 
+    Payload payload = new Payload(message.toString());
+    LOG.info("WebEx Teams message: " + payload.markdown);
     return payload;
   }
 
   /**
-   * Returns the message to send.
+   * Appends the header to the message.
    *
-   * @return The message.
+   * @param message     The StringBuilder being used to build the message.
+   * @param qualityGate The QualityGate object.
+   * @param branch      The Branch object.
    */
-  @SuppressWarnings("deprecation")
-  private String getMessage() {
-    QualityGate qualityGate = analysis.getQualityGate();
-    if (qualityGate == null) {
-      return "";
-    }
-
-    StringBuilder message = new StringBuilder();
+  private void appendHeader(
+      StringBuilder message,
+      QualityGate qualityGate,
+      Optional<Branch> branch
+  ) {
     message.append(format(
-        "# %s %S - [%s]\n\n",
+        "## [%s **%S** [%s]](%s)\n\n",
         qualityGate.getName(),
         qualityGate.getStatus(),
-        analysis.getProject().getName()
+        analysis.getProject().getName(),
+        getProjectBranchUrl(branch)
     ));
-
-    Optional<Branch> branch = analysis.getBranch();
-    /* && !branch.get().isMain()*/
-    branch.ifPresent(
-        value -> message.append(format("* **Branch**: %s  \n", value.getName().orElse("")))
-    );
-
-    String commit = analysis.getScmRevisionId();
-    message.append(format("* **Commit**: %s  \n", commit));
-    Date date = analysis.getDate();
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    message.append(format("* **Date**: %s  \n", simpleDateFormat.format(date)));
-    message.append(getConditionsAppended(qualityGate, failOnly));
-    message.append(format("\n\nSee %s", projectUrl));
-    return message.toString();
   }
 
+  /**
+   * Appends commit information to the message.
+   *
+   * @param message The StringBuilder being used to build the message.
+   */
+  @SuppressWarnings("deprecation")
+  private void appendCommit(StringBuilder message) {
+    String commit = analysis.getScmRevisionId();
+    message.append("* **Commit**: ");
+    if (commitUrl.isEmpty()) {
+      message.append(commit);
+    } else {
+      message.append(format("[%s](%s)", commit, commitUrl));
+    }
+
+    if (!changeAuthor.isEmpty() && !qualityGateOk) {
+      message.append(format(" by %s", changeAuthor));
+    }
+
+    message.append("\n");
+  }
+
+  /**
+   * Appends the analysis date to the message.
+   *
+   * @param message The StringBuilder being used to build the message.
+   */
+  @SuppressWarnings("deprecation")
+  private void appendDate(StringBuilder message) {
+    Date date = analysis.getDate();
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    message.append(format("* **Date**: %s\n", simpleDateFormat.format(date)));
+  }
+
+  /**
+   * Appends the branch name to the message.
+   *
+   * @param message The StringBuilder being used to build the message.
+   * @param branch  The Branch object.
+   */
+  private void appendBranch(StringBuilder message, Optional<Branch> branch) {
+    if (branchIsNonMain(branch)) {
+      //noinspection OptionalGetWithoutIsPresent
+      message.append(format("* **Branch**: %s\n", branch.get().getName().orElse("default")));
+    }
+  }
+
+  /**
+   * Gets the URL for the project including the branch, if supplied.
+   *
+   * @param branch The branch that was analyzed.
+   *
+   * @return The Project URL with optional branch.
+   */
+  private String getProjectBranchUrl(Optional<Branch> branch) {
+    String projectBranchUrl = projectUrl;
+    if (branchIsNonMain(branch)) {
+      //noinspection OptionalGetWithoutIsPresent
+      projectBranchUrl += format("&branch=%s", branch.get().getName().orElse(""));
+    }
+
+    return projectBranchUrl;
+  }
+
+  /**
+   * Checks if the given branch is set and is not the main/master/default branch.
+   *
+   * @param branch The branch to check.
+   *
+   * @return True if the branch is set and is not the main/master/default branch. Otherwise false.
+   */
+  private boolean branchIsNonMain(Optional<Branch> branch) {
+    return branch.isPresent() && !branch.get().isMain();
+  }
 
   /**
    * Appends Condition statuses to the message.
    *
+   * @param message     The StringBuilder being used to build the message.
    * @param qualityGate The Quality Gate.
-   * @param failOnly    Whether to notify only on failures.
-   *
-   * @return The conditions string to append to the message.
    */
-  private String getConditionsAppended(QualityGate qualityGate, boolean failOnly) {
-
-    StringBuilder sb = new StringBuilder();
-
+  private void appendConditions(StringBuilder message, QualityGate qualityGate) {
     List<String> conditions = qualityGate.getConditions()
         .stream()
         .filter(condition -> !failOnly || notOkOrNoValueCondition(condition))
@@ -168,10 +277,8 @@ class PayloadBuilder {
         .collect(Collectors.toList());
 
     for (String condition : conditions) {
-      sb.append(condition);
+      message.append(condition);
     }
-
-    return sb.toString();
   }
 
   /**
@@ -196,10 +303,10 @@ class PayloadBuilder {
   private String translateCondition(Condition condition) {
     if (QualityGate.EvaluationStatus.NO_VALUE.equals(condition.getStatus())) {
       // No value for given metric
-      return format("* **%s**: %s\n", condition.getMetricKey(), condition.getStatus().name());
+      return format("  * **%s**: %s\n", condition.getMetricKey(), condition.getStatus().name());
     } else {
       return format(
-          "* **%s**: %s\n  * %s\n",
+          "  * **%s**: %s | %s\n",
           condition.getMetricKey(),
           condition.getStatus().name(),
           getConditionString(condition)
@@ -243,7 +350,7 @@ class PayloadBuilder {
   private void appendConditionValue(Condition condition, StringBuilder sb) {
     String value = condition.getValue();
     if (value.equals("")) {
-      sb.append("-");
+      sb.append("**-**");
     } else {
       appendNonEmptyValue(condition, sb, value);
     }
@@ -257,11 +364,14 @@ class PayloadBuilder {
    * @param value     The value.
    */
   private void appendNonEmptyValue(Condition condition, StringBuilder sb, String value) {
+    sb.append("**");
     if (conditionValueIsPercentage(condition)) {
       appendPercentageValue(sb, value);
     } else {
       sb.append(value);
     }
+
+    sb.append("**");
   }
 
   /**
