@@ -2,12 +2,11 @@
 
 [![License](https://img.shields.io/github/license/aensley/sonar-teams-notifier)](LICENSE)
 [![Build Status](https://travis-ci.com/aensley/sonar-teams-notifier.svg?branch=master)](https://travis-ci.com/aensley/sonar-teams-notifier)
+[![Maintainability](https://api.codeclimate.com/v1/badges/29bdfe58f74e805ece51/maintainability)](https://codeclimate.com/github/aensley/sonar-teams-notifier/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/29bdfe58f74e805ece51/test_coverage)](https://codeclimate.com/github/aensley/sonar-teams-notifier/test_coverage)
 [![Checkstyle](https://img.shields.io/badge/checkstyle-google-blue?style=flat&logoWidth=8&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAQBAMAAADZpCNOAAAAFVBMVEVvcm3/AAD/sLX/zAD/1Nf/6gD88cWfIbEzAAAAAXRSTlMAQObYZgAAACxJREFUCNdjcHFSUmJAEGAQGmxsTIBIDUs2Y2BLS0tgYEhLA2oRFAQSjAIMACYODUYHdu83AAAAAElFTkSuQmCC)](https://checkstyle.sourceforge.io/google_style.html)
 [![Downloads](https://img.shields.io/github/downloads/aensley/sonar-teams-notifier/total)](https://github.com/aensley/sonar-teams-notifier/releases)
 
-[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/aensley/sonar-teams-notifier.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/aensley/sonar-teams-notifier/context:java)
-[![Maintainability](https://api.codeclimate.com/v1/badges/29bdfe58f74e805ece51/maintainability)](https://codeclimate.com/github/aensley/sonar-teams-notifier/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/29bdfe58f74e805ece51/test_coverage)](https://codeclimate.com/github/aensley/sonar-teams-notifier/test_coverage)
 
 This SonarQube plugin notifies WebEx Teams of Scan Results.
 
