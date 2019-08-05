@@ -60,3 +60,8 @@ mvn sonar:sonar \
   -Dsonar.teams.change_author_email=author@email.com \
   -Dsonar.teams.change_author_name="Author Name"
 ```
+
+
+## Documentation
+
+Browse the Javadocs at https://github.andrewensley.com/sonar-teams-notifier/
