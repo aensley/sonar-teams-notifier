@@ -4,12 +4,13 @@ jdk:
   - oraclejdk8
 before_script: mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
 script: mvn test -Dmaven.javadoc.skip=false -B
+after_success: mvn javadoc:javadoc
 deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_PAGES_TOKEN
   keep_history: false
-  local_dir: build/docs/javadoc
+  local_dir: target/site/apidocs
   target_branch: gh-pages
   on:
     branch: master
