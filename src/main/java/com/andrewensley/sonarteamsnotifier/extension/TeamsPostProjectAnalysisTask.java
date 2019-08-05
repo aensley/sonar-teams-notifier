@@ -62,7 +62,7 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
     }
 
     LOG.debug("Teams notification URL: " + hook);
-    LOG.debug("Teams notification message: " + analysis.toString());
+    LOG.debug("Teams notification analysis: " + analysis.toString());
     sendNotification(hook, failOnly, analysis);
   }
 
@@ -87,14 +87,15 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
    */
   private void sendNotification(String hook, boolean failOnly, ProjectAnalysis analysis) {
     try {
+      Map<String, String> properties = analysis.getScannerContext().getProperties();
       TeamsHttpClient httpClient = TeamsHttpClient
           .of(hook, PayloadBuilder.of(analysis,
                   projectUrl(analysis.getProject().getKey()),
                   failOnly, qualityGateOk(analysis))
-              .commitUrl(settings.get(Constants.COMMIT_URL).orElse(""))
+              .commitUrl(properties.getOrDefault(Constants.COMMIT_URL, ""))
               .changeAuthor(
-                  settings.get(Constants.CHANGE_AUTHOR_EMAIL).orElse(""),
-                  settings.get(Constants.CHANGE_AUTHOR_NAME).orElse("")
+                  properties.getOrDefault(Constants.CHANGE_AUTHOR_EMAIL, ""),
+                  properties.getOrDefault(Constants.CHANGE_AUTHOR_NAME, "")
               )
               .build())
           .bypassHttpsValidation(isBypassEnabled())
