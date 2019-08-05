@@ -2,3 +2,14 @@ dist: trusty
 language: java
 jdk:
   - oraclejdk8
+before_script: mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
+script: mvn test javadoc:javadoc -Dmaven.javadoc.skip=false -B
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_PAGES_TOKEN
+  keep_history: false
+  local_dir: target/site/apidocs
+  target_branch: gh-pages
+  on:
+    branch: master
