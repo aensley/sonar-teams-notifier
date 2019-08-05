@@ -3,8 +3,7 @@ language: java
 jdk:
   - oraclejdk8
 before_script: mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
-script: mvn test -Dmaven.javadoc.skip=false -B
-after_success: mvn javadoc:javadoc
+script: mvn test javadoc:javadoc -Dmaven.javadoc.skip=false -B
 deploy:
   provider: pages
   skip_cleanup: true
