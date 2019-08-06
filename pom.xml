@@ -128,7 +128,7 @@
                 <version>1.1.4</version>
               </docletArtifact>
               <additionalOptions>
-                <!--<additionalOption>...</additionalOption>-->
+                <additionalOption>-umlImageFormat SVG</additionalOption>
               </additionalOptions>
             </configuration>
           </execution>
