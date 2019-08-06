@@ -3,7 +3,7 @@ language: java
 if: branch = master OR type = pull_request
 jdk:
   - oraclejdk8
-before_script: mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
+install: mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B -V
 script: mvn test javadoc:javadoc -Dmaven.javadoc.skip=false -B
 deploy:
   provider: pages
