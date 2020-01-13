@@ -64,4 +64,4 @@ mvn sonar:sonar \
 
 ## Documentation
 
-Browse the Javadocs at https://github.andrewensley.com/sonar-teams-notifier/
+Browse the Javadocs at https://aensley.github.io/sonar-teams-notifier/
