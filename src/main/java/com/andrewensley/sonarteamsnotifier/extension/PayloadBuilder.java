@@ -14,6 +14,7 @@ import org.sonar.api.ce.posttask.Branch;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.QualityGate;
 import org.sonar.api.ce.posttask.QualityGate.Condition;
+import org.sonar.api.internal.apachecommons.lang.StringUtils;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -114,13 +115,15 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   PayloadBuilder changeAuthor(String email, String name) {
-    if (email != null && !email.isEmpty()) {
+    if (StringUtils.isNotEmpty(email)) {
       this.changeAuthor = "<@personEmail:" + email;
-      if (name != null && !name.isEmpty()) {
+      if (StringUtils.isNotEmpty(name)) {
         this.changeAuthor += "|" + name;
       }
 
       this.changeAuthor += ">";
+    } else if (StringUtils.isNotEmpty(name)) {
+      this.changeAuthor = name;
     }
 
     return this;
@@ -178,16 +181,16 @@ class PayloadBuilder {
    * @param branch      The Branch object.
    */
   private void appendHeader(
-      StringBuilder message,
-      QualityGate qualityGate,
-      Optional<Branch> branch
+    StringBuilder message,
+    QualityGate qualityGate,
+    Optional<Branch> branch
   ) {
     message.append(format(
-        "### %s **%S** [[%s](%s)]\n\n",
-        qualityGate.getName(),
-        qualityGate.getStatus(),
-        analysis.getProject().getName(),
-        getProjectBranchUrl(branch)
+      "### %s **%S** [[%s](%s)]\n\n",
+      qualityGate.getName(),
+      qualityGate.getStatus(),
+      analysis.getProject().getName(),
+      getProjectBranchUrl(branch)
     ));
   }
 
@@ -242,7 +245,6 @@ class PayloadBuilder {
    * Gets the URL for the project including the branch, if supplied.
    *
    * @param branch The branch that was analyzed.
-   *
    * @return The Project URL with optional branch.
    */
   private String getProjectBranchUrl(Optional<Branch> branch) {
@@ -259,7 +261,6 @@ class PayloadBuilder {
    * Checks if the given branch is set and is not the main/master/default branch.
    *
    * @param branch The branch to check.
-   *
    * @return True if the branch is set and is not the main/master/default branch. Otherwise false.
    */
   private boolean branchIsNonMain(Optional<Branch> branch) {
@@ -274,10 +275,10 @@ class PayloadBuilder {
    */
   private void appendConditions(StringBuilder message, QualityGate qualityGate) {
     List<String> conditions = qualityGate.getConditions()
-        .stream()
-        .filter(condition -> !failOnly || notOkOrNoValueCondition(condition))
-        .map(this::translateCondition)
-        .collect(Collectors.toList());
+      .stream()
+      .filter(condition -> !failOnly || notOkOrNoValueCondition(condition))
+      .map(this::translateCondition)
+      .collect(Collectors.toList());
 
     Collections.sort(conditions);
     for (String condition : conditions) {
@@ -289,7 +290,6 @@ class PayloadBuilder {
    * Checks that the condition value is not OK or NO_VALUE. Any other value indicates a failure.
    *
    * @param condition The condition to be checked.
-   *
    * @return True if the condition is not OK or NO_VALUE. False if it is.
    */
   private boolean notOkOrNoValueCondition(Condition condition) {
@@ -301,7 +301,6 @@ class PayloadBuilder {
    * Translates individual conditions to formatted strings.
    *
    * @param condition The condition to translate.
-   *
    * @return The translated condition.
    */
   private String translateCondition(Condition condition) {
@@ -310,20 +309,18 @@ class PayloadBuilder {
       return format("  * **%s**: %s\n", condition.getMetricKey(), condition.getStatus().name());
     } else {
       return format(
-          "  * **%s**: %s | %s\n",
-          condition.getMetricKey(),
-          condition.getStatus().name(),
-          getConditionString(condition)
+        "  * **%s**: %s | %s\n",
+        condition.getMetricKey(),
+        condition.getStatus().name(),
+        getConditionString(condition)
       );
     }
   }
 
   /**
-   * Gets the condition string when there's more detailed information
-   * about the quality gate condition.
+   * Gets the condition string when there's more detailed information about the quality gate condition.
    *
    * @param condition The Quality Gate Condition.
-   *
    * @return The condition string.
    */
   @SuppressWarnings("deprecation")
@@ -425,7 +422,6 @@ class PayloadBuilder {
    * Checks if a condition's value is a percentage by checking the metric key.
    *
    * @param condition The condition to check.
-   *
    * @return True if the condition's value is a percentage. False if not.
    */
   private boolean conditionValueIsPercentage(Condition condition) {
@@ -448,7 +444,7 @@ class PayloadBuilder {
   private void assertNotNull(Object object, String objectName) {
     if (object == null) {
       throw new IllegalArgumentException(
-          "[Assertion failed] - " + objectName + " argument is required; it must not be null"
+        "[Assertion failed] - " + objectName + " argument is required; it must not be null"
       );
     }
   }
