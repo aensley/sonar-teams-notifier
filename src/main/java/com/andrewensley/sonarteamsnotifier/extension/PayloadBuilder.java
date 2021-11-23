@@ -14,7 +14,6 @@ import org.sonar.api.ce.posttask.Branch;
 import org.sonar.api.ce.posttask.PostProjectAnalysisTask;
 import org.sonar.api.ce.posttask.QualityGate;
 import org.sonar.api.ce.posttask.QualityGate.Condition;
-import org.sonar.api.internal.apachecommons.lang.StringUtils;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -73,10 +72,10 @@ class PayloadBuilder {
    * @param qualityGateOk Whether the overall quality gate status is OK or not.
    */
   private PayloadBuilder(
-      PostProjectAnalysisTask.ProjectAnalysis analysis,
-      String projectUrl,
-      boolean failOnly,
-      boolean qualityGateOk
+    PostProjectAnalysisTask.ProjectAnalysis analysis,
+    String projectUrl,
+    boolean failOnly,
+    boolean qualityGateOk
   ) {
     this.analysis = analysis;
     this.projectUrl = projectUrl;
@@ -98,10 +97,10 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   static PayloadBuilder of(
-      PostProjectAnalysisTask.ProjectAnalysis analysis,
-      String projectUrl,
-      boolean failOnly,
-      boolean qualityGateOk
+    PostProjectAnalysisTask.ProjectAnalysis analysis,
+    String projectUrl,
+    boolean failOnly,
+    boolean qualityGateOk
   ) {
     return new PayloadBuilder(analysis, projectUrl, failOnly, qualityGateOk);
   }
@@ -115,14 +114,14 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   PayloadBuilder changeAuthor(String email, String name) {
-    if (StringUtils.isNotEmpty(email)) {
+    if (email != null && !email.isEmpty()) {
       this.changeAuthor = "<@personEmail:" + email;
-      if (StringUtils.isNotEmpty(name)) {
+      if (name != null && !name.isEmpty()) {
         this.changeAuthor += "|" + name;
       }
 
       this.changeAuthor += ">";
-    } else if (StringUtils.isNotEmpty(name)) {
+    } else if (name != null && !name.isEmpty()) {
       this.changeAuthor = name;
     }
 
@@ -245,6 +244,7 @@ class PayloadBuilder {
    * Gets the URL for the project including the branch, if supplied.
    *
    * @param branch The branch that was analyzed.
+   *
    * @return The Project URL with optional branch.
    */
   private String getProjectBranchUrl(Optional<Branch> branch) {
@@ -261,6 +261,7 @@ class PayloadBuilder {
    * Checks if the given branch is set and is not the main/master/default branch.
    *
    * @param branch The branch to check.
+   *
    * @return True if the branch is set and is not the main/master/default branch. Otherwise false.
    */
   private boolean branchIsNonMain(Optional<Branch> branch) {
@@ -290,6 +291,7 @@ class PayloadBuilder {
    * Checks that the condition value is not OK or NO_VALUE. Any other value indicates a failure.
    *
    * @param condition The condition to be checked.
+   *
    * @return True if the condition is not OK or NO_VALUE. False if it is.
    */
   private boolean notOkOrNoValueCondition(Condition condition) {
@@ -301,6 +303,7 @@ class PayloadBuilder {
    * Translates individual conditions to formatted strings.
    *
    * @param condition The condition to translate.
+   *
    * @return The translated condition.
    */
   private String translateCondition(Condition condition) {
@@ -318,9 +321,11 @@ class PayloadBuilder {
   }
 
   /**
-   * Gets the condition string when there's more detailed information about the quality gate condition.
+   * Gets the condition string when there's more detailed information
+   * about the quality gate condition.
    *
    * @param condition The Quality Gate Condition.
+   *
    * @return The condition string.
    */
   @SuppressWarnings("deprecation")
@@ -422,6 +427,7 @@ class PayloadBuilder {
    * Checks if a condition's value is a percentage by checking the metric key.
    *
    * @param condition The condition to check.
+   *
    * @return True if the condition's value is a percentage. False if not.
    */
   private boolean conditionValueIsPercentage(Condition condition) {
