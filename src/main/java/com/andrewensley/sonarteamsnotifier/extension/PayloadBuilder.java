@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -152,9 +153,9 @@ class PayloadBuilder {
     assertNotNull(analysis, "analysis");
 
     QualityGate qualityGate = analysis.getQualityGate();
+    Optional<Branch> branch = analysis.getBranch();
     StringBuilder message = new StringBuilder();
     if (qualityGate != null) {
-      Optional<Branch> branch = analysis.getBranch();
       appendHeader(message, qualityGate, branch);
       appendCommit(message);
       appendBranch(message, branch);
@@ -163,7 +164,9 @@ class PayloadBuilder {
     }
 
     Payload payload = new Payload(message.toString());
-    LOG.info("WebEx Teams message: " + payload.markdown);
+    payload.addOpenUriButton(getProjectBranchUrl(branch));
+    payload.setThemeColor(qualityGateOk);
+    LOG.info("WebEx Teams message: " + payload.text);
     return payload;
   }
 
@@ -217,7 +220,7 @@ class PayloadBuilder {
    */
   @SuppressWarnings("deprecation")
   private void appendDate(StringBuilder message) {
-    Date date = analysis.getDate();
+    Date date = analysis.getAnalysis().get().getDate();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     message.append(format("**Date**: %s  \n", simpleDateFormat.format(date)));
   }
@@ -276,6 +279,7 @@ class PayloadBuilder {
         .map(this::translateCondition)
         .collect(Collectors.toList());
 
+    Collections.sort(conditions);
     for (String condition : conditions) {
       message.append(condition);
     }
