@@ -72,10 +72,10 @@ class PayloadBuilder {
    * @param qualityGateOk Whether the overall quality gate status is OK or not.
    */
   private PayloadBuilder(
-    PostProjectAnalysisTask.ProjectAnalysis analysis,
-    String projectUrl,
-    boolean failOnly,
-    boolean qualityGateOk
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
   ) {
     this.analysis = analysis;
     this.projectUrl = projectUrl;
@@ -97,10 +97,10 @@ class PayloadBuilder {
    * @return The PayloadBuilder
    */
   static PayloadBuilder of(
-    PostProjectAnalysisTask.ProjectAnalysis analysis,
-    String projectUrl,
-    boolean failOnly,
-    boolean qualityGateOk
+      PostProjectAnalysisTask.ProjectAnalysis analysis,
+      String projectUrl,
+      boolean failOnly,
+      boolean qualityGateOk
   ) {
     return new PayloadBuilder(analysis, projectUrl, failOnly, qualityGateOk);
   }
@@ -180,16 +180,16 @@ class PayloadBuilder {
    * @param branch      The Branch object.
    */
   private void appendHeader(
-    StringBuilder message,
-    QualityGate qualityGate,
-    Optional<Branch> branch
+      StringBuilder message,
+      QualityGate qualityGate,
+      Optional<Branch> branch
   ) {
     message.append(format(
-      "### %s **%S** [[%s](%s)]\n\n",
-      qualityGate.getName(),
-      qualityGate.getStatus(),
-      analysis.getProject().getName(),
-      getProjectBranchUrl(branch)
+        "### %s **%S** [[%s](%s)]\n\n",
+        qualityGate.getName(),
+        qualityGate.getStatus(),
+        analysis.getProject().getName(),
+        getProjectBranchUrl(branch)
     ));
   }
 
@@ -276,10 +276,10 @@ class PayloadBuilder {
    */
   private void appendConditions(StringBuilder message, QualityGate qualityGate) {
     List<String> conditions = qualityGate.getConditions()
-      .stream()
-      .filter(condition -> !failOnly || notOkOrNoValueCondition(condition))
-      .map(this::translateCondition)
-      .collect(Collectors.toList());
+        .stream()
+        .filter(condition -> !failOnly || notOkOrNoValueCondition(condition))
+        .map(this::translateCondition)
+        .collect(Collectors.toList());
 
     Collections.sort(conditions);
     for (String condition : conditions) {
@@ -339,7 +339,7 @@ class PayloadBuilder {
     }
 
     if (condition.getErrorThreshold() != null) {
-      sb.append(", error if ");
+      //sb.append(", error if ");
       appendConditionComparisonOperator(condition, sb);
       sb.append(condition.getErrorThreshold());
     }
