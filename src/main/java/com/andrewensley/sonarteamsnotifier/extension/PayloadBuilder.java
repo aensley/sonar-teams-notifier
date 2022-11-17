@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -120,6 +121,8 @@ class PayloadBuilder {
       }
 
       this.changeAuthor += ">";
+    } else if (name != null && !name.isEmpty()) {
+      this.changeAuthor = name;
     }
 
     return this;
@@ -152,9 +155,9 @@ class PayloadBuilder {
     assertNotNull(analysis, "analysis");
 
     QualityGate qualityGate = analysis.getQualityGate();
+    Optional<Branch> branch = analysis.getBranch();
     StringBuilder message = new StringBuilder();
     if (qualityGate != null) {
-      Optional<Branch> branch = analysis.getBranch();
       appendHeader(message, qualityGate, branch);
       appendCommit(message);
       appendBranch(message, branch);
@@ -163,7 +166,9 @@ class PayloadBuilder {
     }
 
     Payload payload = new Payload(message.toString());
-    LOG.info("WebEx Teams message: " + payload.markdown);
+    payload.addOpenUriButton(getProjectBranchUrl(branch));
+    payload.setThemeColor(qualityGateOk);
+    LOG.info("WebEx Teams message: " + payload.text);
     return payload;
   }
 
@@ -217,7 +222,7 @@ class PayloadBuilder {
    */
   @SuppressWarnings("deprecation")
   private void appendDate(StringBuilder message) {
-    Date date = analysis.getDate();
+    Date date = analysis.getAnalysis().get().getDate();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     message.append(format("**Date**: %s  \n", simpleDateFormat.format(date)));
   }
@@ -276,6 +281,7 @@ class PayloadBuilder {
         .map(this::translateCondition)
         .collect(Collectors.toList());
 
+    Collections.sort(conditions);
     for (String condition : conditions) {
       message.append(condition);
     }
@@ -306,10 +312,10 @@ class PayloadBuilder {
       return format("  * **%s**: %s\n", condition.getMetricKey(), condition.getStatus().name());
     } else {
       return format(
-          "  * **%s**: %s | %s\n",
-          condition.getMetricKey(),
-          condition.getStatus().name(),
-          getConditionString(condition)
+        "  * **%s**: %s | %s\n",
+        condition.getMetricKey(),
+        condition.getStatus().name(),
+        getConditionString(condition)
       );
     }
   }
@@ -333,7 +339,7 @@ class PayloadBuilder {
     }
 
     if (condition.getErrorThreshold() != null) {
-      sb.append(", error if ");
+      //sb.append(", error if ");
       appendConditionComparisonOperator(condition, sb);
       sb.append(condition.getErrorThreshold());
     }
@@ -444,7 +450,7 @@ class PayloadBuilder {
   private void assertNotNull(Object object, String objectName) {
     if (object == null) {
       throw new IllegalArgumentException(
-          "[Assertion failed] - " + objectName + " argument is required; it must not be null"
+        "[Assertion failed] - " + objectName + " argument is required; it must not be null"
       );
     }
   }

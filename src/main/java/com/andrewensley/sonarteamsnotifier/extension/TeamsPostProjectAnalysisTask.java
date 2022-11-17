@@ -35,13 +35,9 @@ public class TeamsPostProjectAnalysisTask implements PostProjectAnalysisTask {
     this.settings = settings;
   }
 
-  /**
-   * Post analysis task.
-   *
-   * @param analysis The project analysis results.
-   */
   @Override
-  public void finished(final ProjectAnalysis analysis) {
+  public void finished(Context context) {
+    ProjectAnalysis analysis = context.getProjectAnalysis();
     if (!isPluginEnabled()) {
       LOG.info("Teams Notifier Plugin disabled.");
       return;
